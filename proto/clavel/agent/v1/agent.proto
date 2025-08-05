@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package clavel.agent.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/pb/agent/v1;agent_v1";
+
+message AgentSpecification {
+  repeated string deployments = 1;
+}
+
+message AgentServiceShowRequest {
+  string name = 1;
+}
+
+message AgentServiceShowResponse {
+  string name = 1;
+  AgentSpecification spec = 2;
+}
+
+service AgentService {
+  rpc Show(AgentServiceShowRequest) returns (AgentServiceShowResponse) {}
+}
