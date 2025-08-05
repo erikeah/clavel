@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package clavel.deployment.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/pb/deployment/v1;deployment_v1";
+
+message DeploymentServiceShowRequest {
+  string name = 1;
+}
+
+message DeploymentServiceShowResponse {
+  string name = 1;
+}
+
+service DeploymentService {
+  rpc Show(DeploymentServiceShowRequest) returns (DeploymentServiceShowResponse) {}
+}
