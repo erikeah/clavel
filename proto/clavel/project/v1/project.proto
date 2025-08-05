@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package clavel.project.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/pb/project/v1;projectv1";
+
+message ProjectSpecification {
+  string flakeref = 1;
+}
+
+message ProjectServiceShowRequest {
+  string name = 1;
+}
+
+message ProjectServiceShowResponse {
+  string name = 1;
+  ProjectSpecification spec = 2;
+}
+
+message ProjectServiceAddRequest {
+  string name = 1;
+  ProjectSpecification spec = 2;
+}
+
+message ProjectServiceAddResponse {}
+
+service ProjectService {
+  rpc Show(ProjectServiceShowRequest) returns (ProjectServiceShowResponse) {}
+  rpc Add(ProjectServiceAddRequest) returns (ProjectServiceAddResponse) {}
+}
