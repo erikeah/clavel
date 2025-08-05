@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package clavel.project.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/api/project/v1;projectv1";
+
+message ProjectSpecification {
+  string flakeref = 1;
+}
+
+message ProjectStatusSource {
+  string hash = 1;
+  string store_path = 2;
+}
+
+enum ProjectStatusPhase {
+  PROJECT_STATUS_PHASE_UNSPECIFIED = 0;
+  PROJECT_STATUS_PHASE_READY = 1;
+  PROJECT_STATUS_PHASE_FAILED = 2;
+}
+
+message ProjectStatus {
+  ProjectStatusPhase phase = 1;
+  ProjectStatusSource source = 2;
+}
+
+message Project {
+  string name = 1;
+  ProjectSpecification spec = 2;
+  ProjectStatus status = 3;
+}
+
+message ProjectServiceShowRequest {
+  string name = 1;
+}
+
+message ProjectServiceShowResponse {
+  Project data = 1;
+}
+
+message ProjectServiceCreateRequest {
+  Project data = 1;
+}
+
+message ProjectServiceCreateResponse {}
+
+message ProjectServiceListRequest {}
+
+message ProjectServiceListResponse {
+  repeated Project data = 1;
+}
+
+message ProjectServiceDeleteRequest {
+  string name = 1;
+}
+
+message ProjectServiceDeleteResponse {}
+
+service ProjectService {
+  rpc Show(ProjectServiceShowRequest) returns (ProjectServiceShowResponse) {}
+  rpc List(ProjectServiceListRequest) returns (ProjectServiceListResponse) {}
+  rpc Create(ProjectServiceCreateRequest) returns (ProjectServiceCreateResponse) {}
+  // rpc Update(ProjectServiceUpdateRequest) returns (ProjectServiceUpdateResponse) {}
+  rpc Delete(ProjectServiceDeleteRequest) returns (ProjectServiceDeleteResponse) {}
+}
