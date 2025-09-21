@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package clavel.core.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";
+
+message Metadata {
+  uint32 generation = 1;
+  string creation_timestamp = 2;
+  string deletion_timestamp = 3;
+  repeated string finalizers = 4;
+}
