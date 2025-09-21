@@ -4,15 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"connectrpc.com/connect"
-	"github.com/erikeah/clavel/internal/exceptions"
 	"github.com/erikeah/clavel/internal/interceptors"
 	"github.com/erikeah/clavel/internal/project"
 	projectv1 "github.com/erikeah/clavel/pkg/api/project/v1"
 	"github.com/erikeah/clavel/pkg/api/project/v1/projectv1connect"
-	"github.com/jinzhu/copier"
 )
 
 type projectServiceHandler struct {
@@ -23,10 +20,7 @@ func (handler *projectServiceHandler) Create(
 	ctx context.Context,
 	request *connect.Request[projectv1.ProjectServiceCreateRequest],
 ) (*connect.Response[projectv1.ProjectServiceCreateResponse], error) {
-	project := &project.Project{}
-	if err := copier.CopyWithOption(project, request.Msg.GetData(), copier.Option{IgnoreEmpty: true}); err != nil {
-		return nil, err
-	}
+	project := request.Msg.GetData().Convert()
 	if err := handler.service.Create(ctx, project); err != nil {
 		return nil, err
 	}
@@ -54,9 +48,10 @@ func (handler *projectServiceHandler) List(
 	response := &projectv1.ProjectServiceListResponse{
 		Data: []*projectv1.Project{},
 	}
-	if err := copier.Copy(&response.Data, projects); err != nil {
-		slog.Error(err.Error())
-		return nil, exceptions.InternalFailure
+	for _, project := range projects {
+		projectResponse := &projectv1.Project{}
+		projectResponse.Set(project)
+		response.Data = append(response.Data, projectResponse)
 	}
 	return connect.NewResponse(response), nil
 }
@@ -72,34 +67,12 @@ func (handler *projectServiceHandler) Show(
 	response := &projectv1.ProjectServiceShowResponse{
 		Data: &projectv1.Project{},
 	}
-	if err := copier.CopyWithOption(response.Data, project,
-		copier.Option{
-			Converters: []copier.TypeConverter{
-				{
-					SrcType: time.Time{},
-					DstType: copier.String,
-					Fn: func(src interface{}) (interface{}, error) {
-						s, ok := src.(time.Time)
-
-						if !ok {
-							return nil, exceptions.InternalFailure
-						}
-
-						return s.Format(time.RFC3339), nil
-					},
-				},
-			}}); err != nil {
-		slog.Error(err.Error())
-		return nil, exceptions.InternalFailure
-	}
+	response.Data.Set(project)
 	return connect.NewResponse(response), nil
 }
 
 func (handler *projectServiceHandler) Update(ctx context.Context, request *connect.Request[projectv1.ProjectServiceUpdateRequest]) (*connect.Response[projectv1.ProjectServiceUpdateResponse], error) {
-	project := &project.Project{}
-	if err := copier.Copy(project, request.Msg.GetData()); err != nil {
-		return nil, err
-	}
+	project := request.Msg.GetData().Convert()
 	if err := handler.service.Update(ctx, request.Msg.GetQuery().GetName(), project); err != nil {
 		return nil, err
 	}
@@ -116,10 +89,7 @@ func (handler *projectServiceHandler) Watch(ctx context.Context, _ *connect.Requ
 				response := &projectv1.ProjectServiceWatchResponse{
 					Data: &projectv1.Project{},
 				}
-				if err := copier.Copy(response.Data, project); err != nil {
-					slog.Error(err.Error())
-					return exceptions.InternalFailure
-				}
+				response.Data.Set(project)
 				if err := stream.Send(response); err != nil {
 					return err
 				}

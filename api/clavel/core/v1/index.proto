@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package clavel.core.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";

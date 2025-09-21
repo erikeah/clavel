@@ -8,6 +8,6 @@ type ProjectSpecification struct {
 
 type Project struct {
 	Name     string                `json:"name"`
-	Metadata core.Metadata         `json:"metadata"`
+	Metadata *core.Metadata        `json:"metadata"`
 	Spec     *ProjectSpecification `json:"spec"`
 }

@@ -7,6 +7,7 @@
 package projectv1
 
 import (
+	v1 "github.com/erikeah/clavel/pkg/api/core/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -158,74 +159,6 @@ func (x *Error) GetMessage() string {
 	return ""
 }
 
-type Metadata struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Generation        uint32                 `protobuf:"varint,1,opt,name=generation,proto3" json:"generation,omitempty"`
-	CreationTimestamp string                 `protobuf:"bytes,2,opt,name=creation_timestamp,json=creationTimestamp,proto3" json:"creation_timestamp,omitempty"`
-	DeletionTimestamp string                 `protobuf:"bytes,3,opt,name=deletion_timestamp,json=deletionTimestamp,proto3" json:"deletion_timestamp,omitempty"`
-	Finalizers        []string               `protobuf:"bytes,4,rep,name=finalizers,proto3" json:"finalizers,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
-}
-
-func (x *Metadata) Reset() {
-	*x = Metadata{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Metadata) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Metadata) ProtoMessage() {}
-
-func (x *Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Metadata.ProtoReflect.Descriptor instead.
-func (*Metadata) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *Metadata) GetGeneration() uint32 {
-	if x != nil {
-		return x.Generation
-	}
-	return 0
-}
-
-func (x *Metadata) GetCreationTimestamp() string {
-	if x != nil {
-		return x.CreationTimestamp
-	}
-	return ""
-}
-
-func (x *Metadata) GetDeletionTimestamp() string {
-	if x != nil {
-		return x.DeletionTimestamp
-	}
-	return ""
-}
-
-func (x *Metadata) GetFinalizers() []string {
-	if x != nil {
-		return x.Finalizers
-	}
-	return nil
-}
-
 type ProjectSpecification struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Flakeref      string                 `protobuf:"bytes,1,opt,name=flakeref,proto3" json:"flakeref,omitempty"`
@@ -235,7 +168,7 @@ type ProjectSpecification struct {
 
 func (x *ProjectSpecification) Reset() {
 	*x = ProjectSpecification{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[3]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -247,7 +180,7 @@ func (x *ProjectSpecification) String() string {
 func (*ProjectSpecification) ProtoMessage() {}
 
 func (x *ProjectSpecification) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[3]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -260,7 +193,7 @@ func (x *ProjectSpecification) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectSpecification.ProtoReflect.Descriptor instead.
 func (*ProjectSpecification) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{3}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ProjectSpecification) GetFlakeref() string {
@@ -280,7 +213,7 @@ type ProjectStatusSource struct {
 
 func (x *ProjectStatusSource) Reset() {
 	*x = ProjectStatusSource{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[4]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -292,7 +225,7 @@ func (x *ProjectStatusSource) String() string {
 func (*ProjectStatusSource) ProtoMessage() {}
 
 func (x *ProjectStatusSource) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[4]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -305,7 +238,7 @@ func (x *ProjectStatusSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectStatusSource.ProtoReflect.Descriptor instead.
 func (*ProjectStatusSource) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{4}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ProjectStatusSource) GetHash() string {
@@ -332,7 +265,7 @@ type ProjectStatus struct {
 
 func (x *ProjectStatus) Reset() {
 	*x = ProjectStatus{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[5]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -344,7 +277,7 @@ func (x *ProjectStatus) String() string {
 func (*ProjectStatus) ProtoMessage() {}
 
 func (x *ProjectStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[5]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +290,7 @@ func (x *ProjectStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectStatus.ProtoReflect.Descriptor instead.
 func (*ProjectStatus) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{5}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ProjectStatus) GetPhase() ProjectStatusPhase {
@@ -378,14 +311,14 @@ type Project struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Spec          *ProjectSpecification  `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
-	Metadata      *Metadata              `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"` // ProjectStatus status = 4;
+	Metadata      *v1.Metadata           `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"` // ProjectStatus status = 4;
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Project) Reset() {
 	*x = Project{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[6]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +330,7 @@ func (x *Project) String() string {
 func (*Project) ProtoMessage() {}
 
 func (x *Project) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[6]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +343,7 @@ func (x *Project) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Project.ProtoReflect.Descriptor instead.
 func (*Project) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{6}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Project) GetName() string {
@@ -427,7 +360,7 @@ func (x *Project) GetSpec() *ProjectSpecification {
 	return nil
 }
 
-func (x *Project) GetMetadata() *Metadata {
+func (x *Project) GetMetadata() *v1.Metadata {
 	if x != nil {
 		return x.Metadata
 	}
@@ -443,7 +376,7 @@ type ProjectServiceShowRequest struct {
 
 func (x *ProjectServiceShowRequest) Reset() {
 	*x = ProjectServiceShowRequest{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[7]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -455,7 +388,7 @@ func (x *ProjectServiceShowRequest) String() string {
 func (*ProjectServiceShowRequest) ProtoMessage() {}
 
 func (x *ProjectServiceShowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[7]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -468,7 +401,7 @@ func (x *ProjectServiceShowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceShowRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceShowRequest) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{7}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ProjectServiceShowRequest) GetQuery() *Query {
@@ -487,7 +420,7 @@ type ProjectServiceShowResponse struct {
 
 func (x *ProjectServiceShowResponse) Reset() {
 	*x = ProjectServiceShowResponse{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[8]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -499,7 +432,7 @@ func (x *ProjectServiceShowResponse) String() string {
 func (*ProjectServiceShowResponse) ProtoMessage() {}
 
 func (x *ProjectServiceShowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[8]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -512,7 +445,7 @@ func (x *ProjectServiceShowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceShowResponse.ProtoReflect.Descriptor instead.
 func (*ProjectServiceShowResponse) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{8}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ProjectServiceShowResponse) GetData() *Project {
@@ -531,7 +464,7 @@ type ProjectServiceCreateRequest struct {
 
 func (x *ProjectServiceCreateRequest) Reset() {
 	*x = ProjectServiceCreateRequest{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[9]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -543,7 +476,7 @@ func (x *ProjectServiceCreateRequest) String() string {
 func (*ProjectServiceCreateRequest) ProtoMessage() {}
 
 func (x *ProjectServiceCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[9]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -556,7 +489,7 @@ func (x *ProjectServiceCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceCreateRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceCreateRequest) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{9}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ProjectServiceCreateRequest) GetData() *Project {
@@ -574,7 +507,7 @@ type ProjectServiceCreateResponse struct {
 
 func (x *ProjectServiceCreateResponse) Reset() {
 	*x = ProjectServiceCreateResponse{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[10]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -586,7 +519,7 @@ func (x *ProjectServiceCreateResponse) String() string {
 func (*ProjectServiceCreateResponse) ProtoMessage() {}
 
 func (x *ProjectServiceCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[10]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -599,7 +532,7 @@ func (x *ProjectServiceCreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceCreateResponse.ProtoReflect.Descriptor instead.
 func (*ProjectServiceCreateResponse) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{10}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{9}
 }
 
 type ProjectServiceListRequest struct {
@@ -610,7 +543,7 @@ type ProjectServiceListRequest struct {
 
 func (x *ProjectServiceListRequest) Reset() {
 	*x = ProjectServiceListRequest{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[11]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -622,7 +555,7 @@ func (x *ProjectServiceListRequest) String() string {
 func (*ProjectServiceListRequest) ProtoMessage() {}
 
 func (x *ProjectServiceListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[11]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -635,7 +568,7 @@ func (x *ProjectServiceListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceListRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceListRequest) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{11}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{10}
 }
 
 type ProjectServiceListResponse struct {
@@ -647,7 +580,7 @@ type ProjectServiceListResponse struct {
 
 func (x *ProjectServiceListResponse) Reset() {
 	*x = ProjectServiceListResponse{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[12]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -659,7 +592,7 @@ func (x *ProjectServiceListResponse) String() string {
 func (*ProjectServiceListResponse) ProtoMessage() {}
 
 func (x *ProjectServiceListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[12]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -672,7 +605,7 @@ func (x *ProjectServiceListResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceListResponse.ProtoReflect.Descriptor instead.
 func (*ProjectServiceListResponse) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{12}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ProjectServiceListResponse) GetData() []*Project {
@@ -691,7 +624,7 @@ type ProjectServiceDeleteRequest struct {
 
 func (x *ProjectServiceDeleteRequest) Reset() {
 	*x = ProjectServiceDeleteRequest{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[13]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -703,7 +636,7 @@ func (x *ProjectServiceDeleteRequest) String() string {
 func (*ProjectServiceDeleteRequest) ProtoMessage() {}
 
 func (x *ProjectServiceDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[13]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -716,7 +649,7 @@ func (x *ProjectServiceDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceDeleteRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{13}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ProjectServiceDeleteRequest) GetQuery() *Query {
@@ -734,7 +667,7 @@ type ProjectServiceDeleteResponse struct {
 
 func (x *ProjectServiceDeleteResponse) Reset() {
 	*x = ProjectServiceDeleteResponse{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[14]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -746,7 +679,7 @@ func (x *ProjectServiceDeleteResponse) String() string {
 func (*ProjectServiceDeleteResponse) ProtoMessage() {}
 
 func (x *ProjectServiceDeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[14]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -759,7 +692,7 @@ func (x *ProjectServiceDeleteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceDeleteResponse.ProtoReflect.Descriptor instead.
 func (*ProjectServiceDeleteResponse) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{14}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{13}
 }
 
 type ProjectServiceUpdateRequest struct {
@@ -772,7 +705,7 @@ type ProjectServiceUpdateRequest struct {
 
 func (x *ProjectServiceUpdateRequest) Reset() {
 	*x = ProjectServiceUpdateRequest{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[15]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -784,7 +717,7 @@ func (x *ProjectServiceUpdateRequest) String() string {
 func (*ProjectServiceUpdateRequest) ProtoMessage() {}
 
 func (x *ProjectServiceUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[15]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -797,7 +730,7 @@ func (x *ProjectServiceUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceUpdateRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{15}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ProjectServiceUpdateRequest) GetQuery() *Query {
@@ -822,7 +755,7 @@ type ProjectServiceUpdateResponse struct {
 
 func (x *ProjectServiceUpdateResponse) Reset() {
 	*x = ProjectServiceUpdateResponse{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[16]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -834,7 +767,7 @@ func (x *ProjectServiceUpdateResponse) String() string {
 func (*ProjectServiceUpdateResponse) ProtoMessage() {}
 
 func (x *ProjectServiceUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[16]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +780,7 @@ func (x *ProjectServiceUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceUpdateResponse.ProtoReflect.Descriptor instead.
 func (*ProjectServiceUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{16}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{15}
 }
 
 type ProjectServiceWatchRequest struct {
@@ -858,7 +791,7 @@ type ProjectServiceWatchRequest struct {
 
 func (x *ProjectServiceWatchRequest) Reset() {
 	*x = ProjectServiceWatchRequest{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[17]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -870,7 +803,7 @@ func (x *ProjectServiceWatchRequest) String() string {
 func (*ProjectServiceWatchRequest) ProtoMessage() {}
 
 func (x *ProjectServiceWatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[17]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -883,7 +816,7 @@ func (x *ProjectServiceWatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceWatchRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceWatchRequest) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{17}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{16}
 }
 
 type ProjectServiceWatchResponse struct {
@@ -896,7 +829,7 @@ type ProjectServiceWatchResponse struct {
 
 func (x *ProjectServiceWatchResponse) Reset() {
 	*x = ProjectServiceWatchResponse{}
-	mi := &file_clavel_project_v1_project_proto_msgTypes[18]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -908,7 +841,7 @@ func (x *ProjectServiceWatchResponse) String() string {
 func (*ProjectServiceWatchResponse) ProtoMessage() {}
 
 func (x *ProjectServiceWatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_project_v1_project_proto_msgTypes[18]
+	mi := &file_clavel_project_v1_project_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -921,7 +854,7 @@ func (x *ProjectServiceWatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProjectServiceWatchResponse.ProtoReflect.Descriptor instead.
 func (*ProjectServiceWatchResponse) Descriptor() ([]byte, []int) {
-	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{18}
+	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ProjectServiceWatchResponse) GetData() *Project {
@@ -942,20 +875,11 @@ var File_clavel_project_v1_project_proto protoreflect.FileDescriptor
 
 const file_clavel_project_v1_project_proto_rawDesc = "" +
 	"\n" +
-	"\x1fclavel/project/v1/project.proto\x12\x11clavel.project.v1\"\x1b\n" +
+	"\x1fclavel/project/v1/project.proto\x12\x11clavel.project.v1\x1a\x1dclavel/core/v1/metadata.proto\"\x1b\n" +
 	"\x05Query\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"!\n" +
 	"\x05Error\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"\xa8\x01\n" +
-	"\bMetadata\x12\x1e\n" +
-	"\n" +
-	"generation\x18\x01 \x01(\rR\n" +
-	"generation\x12-\n" +
-	"\x12creation_timestamp\x18\x02 \x01(\tR\x11creationTimestamp\x12-\n" +
-	"\x12deletion_timestamp\x18\x03 \x01(\tR\x11deletionTimestamp\x12\x1e\n" +
-	"\n" +
-	"finalizers\x18\x04 \x03(\tR\n" +
-	"finalizers\"2\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"2\n" +
 	"\x14ProjectSpecification\x12\x1a\n" +
 	"\bflakeref\x18\x01 \x01(\tR\bflakeref\"H\n" +
 	"\x13ProjectStatusSource\x12\x12\n" +
@@ -964,11 +888,11 @@ const file_clavel_project_v1_project_proto_rawDesc = "" +
 	"store_path\x18\x02 \x01(\tR\tstorePath\"\x8c\x01\n" +
 	"\rProjectStatus\x12;\n" +
 	"\x05phase\x18\x01 \x01(\x0e2%.clavel.project.v1.ProjectStatusPhaseR\x05phase\x12>\n" +
-	"\x06source\x18\x02 \x01(\v2&.clavel.project.v1.ProjectStatusSourceR\x06source\"\x93\x01\n" +
+	"\x06source\x18\x02 \x01(\v2&.clavel.project.v1.ProjectStatusSourceR\x06source\"\x90\x01\n" +
 	"\aProject\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12;\n" +
-	"\x04spec\x18\x02 \x01(\v2'.clavel.project.v1.ProjectSpecificationR\x04spec\x127\n" +
-	"\bmetadata\x18\x03 \x01(\v2\x1b.clavel.project.v1.MetadataR\bmetadata\"K\n" +
+	"\x04spec\x18\x02 \x01(\v2'.clavel.project.v1.ProjectSpecificationR\x04spec\x124\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x18.clavel.core.v1.MetadataR\bmetadata\"K\n" +
 	"\x19ProjectServiceShowRequest\x12.\n" +
 	"\x05query\x18\x01 \x01(\v2\x18.clavel.project.v1.QueryR\x05query\"L\n" +
 	"\x1aProjectServiceShowResponse\x12.\n" +
@@ -1015,55 +939,55 @@ func file_clavel_project_v1_project_proto_rawDescGZIP() []byte {
 }
 
 var file_clavel_project_v1_project_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_clavel_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_clavel_project_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_clavel_project_v1_project_proto_goTypes = []any{
 	(ProjectStatusPhase)(0),              // 0: clavel.project.v1.ProjectStatusPhase
 	(*Query)(nil),                        // 1: clavel.project.v1.Query
 	(*Error)(nil),                        // 2: clavel.project.v1.Error
-	(*Metadata)(nil),                     // 3: clavel.project.v1.Metadata
-	(*ProjectSpecification)(nil),         // 4: clavel.project.v1.ProjectSpecification
-	(*ProjectStatusSource)(nil),          // 5: clavel.project.v1.ProjectStatusSource
-	(*ProjectStatus)(nil),                // 6: clavel.project.v1.ProjectStatus
-	(*Project)(nil),                      // 7: clavel.project.v1.Project
-	(*ProjectServiceShowRequest)(nil),    // 8: clavel.project.v1.ProjectServiceShowRequest
-	(*ProjectServiceShowResponse)(nil),   // 9: clavel.project.v1.ProjectServiceShowResponse
-	(*ProjectServiceCreateRequest)(nil),  // 10: clavel.project.v1.ProjectServiceCreateRequest
-	(*ProjectServiceCreateResponse)(nil), // 11: clavel.project.v1.ProjectServiceCreateResponse
-	(*ProjectServiceListRequest)(nil),    // 12: clavel.project.v1.ProjectServiceListRequest
-	(*ProjectServiceListResponse)(nil),   // 13: clavel.project.v1.ProjectServiceListResponse
-	(*ProjectServiceDeleteRequest)(nil),  // 14: clavel.project.v1.ProjectServiceDeleteRequest
-	(*ProjectServiceDeleteResponse)(nil), // 15: clavel.project.v1.ProjectServiceDeleteResponse
-	(*ProjectServiceUpdateRequest)(nil),  // 16: clavel.project.v1.ProjectServiceUpdateRequest
-	(*ProjectServiceUpdateResponse)(nil), // 17: clavel.project.v1.ProjectServiceUpdateResponse
-	(*ProjectServiceWatchRequest)(nil),   // 18: clavel.project.v1.ProjectServiceWatchRequest
-	(*ProjectServiceWatchResponse)(nil),  // 19: clavel.project.v1.ProjectServiceWatchResponse
+	(*ProjectSpecification)(nil),         // 3: clavel.project.v1.ProjectSpecification
+	(*ProjectStatusSource)(nil),          // 4: clavel.project.v1.ProjectStatusSource
+	(*ProjectStatus)(nil),                // 5: clavel.project.v1.ProjectStatus
+	(*Project)(nil),                      // 6: clavel.project.v1.Project
+	(*ProjectServiceShowRequest)(nil),    // 7: clavel.project.v1.ProjectServiceShowRequest
+	(*ProjectServiceShowResponse)(nil),   // 8: clavel.project.v1.ProjectServiceShowResponse
+	(*ProjectServiceCreateRequest)(nil),  // 9: clavel.project.v1.ProjectServiceCreateRequest
+	(*ProjectServiceCreateResponse)(nil), // 10: clavel.project.v1.ProjectServiceCreateResponse
+	(*ProjectServiceListRequest)(nil),    // 11: clavel.project.v1.ProjectServiceListRequest
+	(*ProjectServiceListResponse)(nil),   // 12: clavel.project.v1.ProjectServiceListResponse
+	(*ProjectServiceDeleteRequest)(nil),  // 13: clavel.project.v1.ProjectServiceDeleteRequest
+	(*ProjectServiceDeleteResponse)(nil), // 14: clavel.project.v1.ProjectServiceDeleteResponse
+	(*ProjectServiceUpdateRequest)(nil),  // 15: clavel.project.v1.ProjectServiceUpdateRequest
+	(*ProjectServiceUpdateResponse)(nil), // 16: clavel.project.v1.ProjectServiceUpdateResponse
+	(*ProjectServiceWatchRequest)(nil),   // 17: clavel.project.v1.ProjectServiceWatchRequest
+	(*ProjectServiceWatchResponse)(nil),  // 18: clavel.project.v1.ProjectServiceWatchResponse
+	(*v1.Metadata)(nil),                  // 19: clavel.core.v1.Metadata
 }
 var file_clavel_project_v1_project_proto_depIdxs = []int32{
 	0,  // 0: clavel.project.v1.ProjectStatus.phase:type_name -> clavel.project.v1.ProjectStatusPhase
-	5,  // 1: clavel.project.v1.ProjectStatus.source:type_name -> clavel.project.v1.ProjectStatusSource
-	4,  // 2: clavel.project.v1.Project.spec:type_name -> clavel.project.v1.ProjectSpecification
-	3,  // 3: clavel.project.v1.Project.metadata:type_name -> clavel.project.v1.Metadata
+	4,  // 1: clavel.project.v1.ProjectStatus.source:type_name -> clavel.project.v1.ProjectStatusSource
+	3,  // 2: clavel.project.v1.Project.spec:type_name -> clavel.project.v1.ProjectSpecification
+	19, // 3: clavel.project.v1.Project.metadata:type_name -> clavel.core.v1.Metadata
 	1,  // 4: clavel.project.v1.ProjectServiceShowRequest.query:type_name -> clavel.project.v1.Query
-	7,  // 5: clavel.project.v1.ProjectServiceShowResponse.data:type_name -> clavel.project.v1.Project
-	7,  // 6: clavel.project.v1.ProjectServiceCreateRequest.data:type_name -> clavel.project.v1.Project
-	7,  // 7: clavel.project.v1.ProjectServiceListResponse.data:type_name -> clavel.project.v1.Project
+	6,  // 5: clavel.project.v1.ProjectServiceShowResponse.data:type_name -> clavel.project.v1.Project
+	6,  // 6: clavel.project.v1.ProjectServiceCreateRequest.data:type_name -> clavel.project.v1.Project
+	6,  // 7: clavel.project.v1.ProjectServiceListResponse.data:type_name -> clavel.project.v1.Project
 	1,  // 8: clavel.project.v1.ProjectServiceDeleteRequest.query:type_name -> clavel.project.v1.Query
 	1,  // 9: clavel.project.v1.ProjectServiceUpdateRequest.query:type_name -> clavel.project.v1.Query
-	7,  // 10: clavel.project.v1.ProjectServiceUpdateRequest.data:type_name -> clavel.project.v1.Project
-	7,  // 11: clavel.project.v1.ProjectServiceWatchResponse.data:type_name -> clavel.project.v1.Project
+	6,  // 10: clavel.project.v1.ProjectServiceUpdateRequest.data:type_name -> clavel.project.v1.Project
+	6,  // 11: clavel.project.v1.ProjectServiceWatchResponse.data:type_name -> clavel.project.v1.Project
 	2,  // 12: clavel.project.v1.ProjectServiceWatchResponse.error:type_name -> clavel.project.v1.Error
-	8,  // 13: clavel.project.v1.ProjectService.Show:input_type -> clavel.project.v1.ProjectServiceShowRequest
-	12, // 14: clavel.project.v1.ProjectService.List:input_type -> clavel.project.v1.ProjectServiceListRequest
-	10, // 15: clavel.project.v1.ProjectService.Create:input_type -> clavel.project.v1.ProjectServiceCreateRequest
-	16, // 16: clavel.project.v1.ProjectService.Update:input_type -> clavel.project.v1.ProjectServiceUpdateRequest
-	14, // 17: clavel.project.v1.ProjectService.Delete:input_type -> clavel.project.v1.ProjectServiceDeleteRequest
-	18, // 18: clavel.project.v1.ProjectService.Watch:input_type -> clavel.project.v1.ProjectServiceWatchRequest
-	9,  // 19: clavel.project.v1.ProjectService.Show:output_type -> clavel.project.v1.ProjectServiceShowResponse
-	13, // 20: clavel.project.v1.ProjectService.List:output_type -> clavel.project.v1.ProjectServiceListResponse
-	11, // 21: clavel.project.v1.ProjectService.Create:output_type -> clavel.project.v1.ProjectServiceCreateResponse
-	17, // 22: clavel.project.v1.ProjectService.Update:output_type -> clavel.project.v1.ProjectServiceUpdateResponse
-	15, // 23: clavel.project.v1.ProjectService.Delete:output_type -> clavel.project.v1.ProjectServiceDeleteResponse
-	19, // 24: clavel.project.v1.ProjectService.Watch:output_type -> clavel.project.v1.ProjectServiceWatchResponse
+	7,  // 13: clavel.project.v1.ProjectService.Show:input_type -> clavel.project.v1.ProjectServiceShowRequest
+	11, // 14: clavel.project.v1.ProjectService.List:input_type -> clavel.project.v1.ProjectServiceListRequest
+	9,  // 15: clavel.project.v1.ProjectService.Create:input_type -> clavel.project.v1.ProjectServiceCreateRequest
+	15, // 16: clavel.project.v1.ProjectService.Update:input_type -> clavel.project.v1.ProjectServiceUpdateRequest
+	13, // 17: clavel.project.v1.ProjectService.Delete:input_type -> clavel.project.v1.ProjectServiceDeleteRequest
+	17, // 18: clavel.project.v1.ProjectService.Watch:input_type -> clavel.project.v1.ProjectServiceWatchRequest
+	8,  // 19: clavel.project.v1.ProjectService.Show:output_type -> clavel.project.v1.ProjectServiceShowResponse
+	12, // 20: clavel.project.v1.ProjectService.List:output_type -> clavel.project.v1.ProjectServiceListResponse
+	10, // 21: clavel.project.v1.ProjectService.Create:output_type -> clavel.project.v1.ProjectServiceCreateResponse
+	16, // 22: clavel.project.v1.ProjectService.Update:output_type -> clavel.project.v1.ProjectServiceUpdateResponse
+	14, // 23: clavel.project.v1.ProjectService.Delete:output_type -> clavel.project.v1.ProjectServiceDeleteResponse
+	18, // 24: clavel.project.v1.ProjectService.Watch:output_type -> clavel.project.v1.ProjectServiceWatchResponse
 	19, // [19:25] is the sub-list for method output_type
 	13, // [13:19] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -1082,7 +1006,7 @@ func file_clavel_project_v1_project_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_clavel_project_v1_project_proto_rawDesc), len(file_clavel_project_v1_project_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

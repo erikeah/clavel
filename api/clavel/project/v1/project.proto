@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package clavel.project.v1;
 
+import "clavel/core/v1/metadata.proto";
+
 option go_package = "github.com/erikeah/clavel/pkg/api/project/v1;projectv1";
 
 message Query {
@@ -10,13 +12,6 @@ message Query {
 
 message Error {
   string message = 1;
-}
-
-message Metadata {
-  uint32 generation = 1;
-  string creation_timestamp = 2;
-  string deletion_timestamp = 3;
-  repeated string finalizers = 4;
 }
 
 message ProjectSpecification {
@@ -42,7 +37,7 @@ message ProjectStatus {
 message Project {
   string name = 1;
   ProjectSpecification spec = 2;
-  Metadata metadata = 3;
+  clavel.core.v1.Metadata metadata = 3;
   // ProjectStatus status = 4;
 }
 
