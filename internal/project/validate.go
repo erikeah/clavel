@@ -3,6 +3,8 @@ package project
 import (
 	"errors"
 	"regexp"
+
+	"github.com/erikeah/clavel/internal/core"
 )
 
 func ValidateFlakeref(flakeRef string) error {
@@ -42,6 +44,9 @@ func ValidateProject(project *Project) error {
 		projectErrors = errors.Join(projectErrors, err)
 	}
 	if err := ValidateProjectSpecification(project.Spec); err != nil {
+		projectErrors = errors.Join(projectErrors, err)
+	}
+	if err := core.ValidateMetadata(project.Metadata); err != nil {
 		projectErrors = errors.Join(projectErrors, err)
 	}
 	return projectErrors

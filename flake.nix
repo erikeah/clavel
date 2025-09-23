@@ -28,25 +28,31 @@
             with pkgs;
             mkShell {
               packages = [
-                (writers.writeBashBin "start-develop-services" ''
+                (writers.writeBashBin "develop-start-services" ''
                   ${pkgs.etcd}/bin/etcd \
                     --log-level warn \
                     --name .develop
                 '')
-                (writers.writeBashBin "watch-develop-clavelapi" ''
+                (writers.writeBashBin "develop-watch-clavelapi" ''
                   export PORT=8080
                   ${pkgs.watchexec}/bin/watchexec -e go -r "go run ./cmd/clavelapi"
                 '')
-                (writers.writeBashBin "watch-develop-clavelcontroller" ''
+                (writers.writeBashBin "develop-debug-clavelapi" ''
+                  export PORT=8080
+                  export CGO_CFLAGS="-O1"
+                  ${pkgs.delve}/bin/dlv debug ./cmd/clavelapi
+                '')
+                (writers.writeBashBin "develop-watch-clavelcontroller" ''
                   ${pkgs.watchexec}/bin/watchexec -e go -r "go run ./cmd/clavelcontroller"
                 '')
-                go
                 buf
-                protoc-gen-go
-                protoc-gen-connect-go
-                gopls
-                watchexec
+                delve
                 etcd
+                go
+                gopls
+                protoc-gen-connect-go
+                protoc-gen-go
+                watchexec
               ];
             };
         };

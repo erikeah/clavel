@@ -3,12 +3,9 @@ syntax = "proto3";
 package clavel.project.v1;
 
 import "clavel/core/v1/metadata.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/erikeah/clavel/pkg/api/project/v1;projectv1";
-
-message Query {
-  string name = 1;
-}
 
 message Error {
   string message = 1;
@@ -42,7 +39,7 @@ message Project {
 }
 
 message ProjectServiceShowRequest {
-  Query query = 1;
+  string name = 1;
 }
 
 message ProjectServiceShowResponse {
@@ -62,14 +59,15 @@ message ProjectServiceListResponse {
 }
 
 message ProjectServiceDeleteRequest {
-  Query query = 1;
+  string name = 1;
 }
 
 message ProjectServiceDeleteResponse {}
 
 message ProjectServiceUpdateRequest {
-  Query query = 1;
+  string name = 1;
   Project data = 2;
+  google.protobuf.FieldMask update_mask = 3;
 }
 
 message ProjectServiceUpdateResponse {}

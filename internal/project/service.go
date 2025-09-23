@@ -6,37 +6,41 @@ import (
 	"time"
 
 	"github.com/erikeah/clavel/internal/exceptions"
-	"github.com/jinzhu/copier"
 )
 
-type ProjectServiceDeleteOptions struct {
-}
-
 type ProjectService struct {
-	store ProjectStore
+	store       ProjectStore
+	setDefaults func(*Project) error
+	merge       func(over *Project, from *Project) error
+	validate    func(*Project) error
 }
 
 func (s *ProjectService) Create(ctx context.Context, data *Project) error {
-	err := ValidateProject(data)
-	if err != nil {
+	resource := &Project{}
+	if err := s.setDefaults(resource); err != nil {
+		return err
+	}
+	if err := s.merge(resource, data); err != nil {
+		return err
+	}
+	if err := s.validate(resource); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)
 	}
-	err = s.store.Create(ctx, data.Name, data)
-	if err != nil {
+	if err := s.store.Create(ctx, resource.Name, resource); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *ProjectService) Delete(ctx context.Context, name string) error {
-	project, err := s.Show(ctx, name)
+	target, err := s.Show(ctx, name)
 	if err != nil {
 		return err
 	}
-	if len(project.Metadata.Finalizers) > 0 {
+	if len(target.Metadata.Finalizers) > 0 {
 		nowUTC := time.Now().UTC()
-		project.Metadata.DeletionTimestamp = &nowUTC
-		return s.Update(ctx, name, project)
+		target.Metadata.DeletionTimestamp = &nowUTC
+		return s.Update(ctx, name, target)
 	} else {
 		return s.store.Delete(ctx, name)
 	}
@@ -51,29 +55,28 @@ func (s *ProjectService) Show(ctx context.Context, name string) (*Project, error
 }
 
 func (s *ProjectService) Update(ctx context.Context, name string, data *Project) error {
-	current, err := s.store.FindOne(ctx, name)
+	target, err := s.Show(ctx, name)
 	if err != nil {
 		return err
 	}
-	if current.Name != data.Name {
-		return errors.Join(exceptions.InvalidArguments, errors.New("name cannot be changed"))
-	}
-	if err := copier.CopyWithOption(current, data, copier.Option{IgnoreEmpty: true}); err != nil {
+	if err := s.merge(target, data); err != nil {
 		return errors.Join(exceptions.InternalFailure, err)
 	}
-
-	if err := ValidateProject(current); err != nil {
+	if err := s.validate(target); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)
 	}
-	return s.store.Update(ctx, name, current)
+	return s.store.Update(ctx, name, target)
 }
 
 func (s *ProjectService) Watch(ctx context.Context) (<-chan *Project, <-chan error) {
 	return s.store.Watch(ctx)
 }
 
-func NewProjectService(repository ProjectStore) *ProjectService {
+func NewProjectService(store ProjectStore) *ProjectService {
 	return &ProjectService{
-		repository,
+		store:       store,
+		validate:    ValidateProject,
+		merge:       MergeProject,
+		setDefaults: SetDefaults_Project,
 	}
 }

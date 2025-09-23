@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/erikeah/clavel/internal/interceptors"
 	"github.com/erikeah/clavel/internal/project"
+	"github.com/erikeah/clavel/internal/utils"
 	projectv1 "github.com/erikeah/clavel/pkg/api/project/v1"
 	"github.com/erikeah/clavel/pkg/api/project/v1/projectv1connect"
 )
@@ -20,7 +21,7 @@ func (handler *projectServiceHandler) Create(
 	ctx context.Context,
 	request *connect.Request[projectv1.ProjectServiceCreateRequest],
 ) (*connect.Response[projectv1.ProjectServiceCreateResponse], error) {
-	project := request.Msg.GetData().Convert()
+	project := request.Msg.GetData().Convert(nil)
 	if err := handler.service.Create(ctx, project); err != nil {
 		return nil, err
 	}
@@ -31,7 +32,7 @@ func (handler *projectServiceHandler) Delete(
 	ctx context.Context,
 	request *connect.Request[projectv1.ProjectServiceDeleteRequest],
 ) (*connect.Response[projectv1.ProjectServiceDeleteResponse], error) {
-	if err := handler.service.Delete(ctx, request.Msg.GetQuery().GetName()); err != nil {
+	if err := handler.service.Delete(ctx, request.Msg.GetName()); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&projectv1.ProjectServiceDeleteResponse{}), nil
@@ -60,7 +61,7 @@ func (handler *projectServiceHandler) Show(
 	ctx context.Context,
 	request *connect.Request[projectv1.ProjectServiceShowRequest],
 ) (*connect.Response[projectv1.ProjectServiceShowResponse], error) {
-	project, err := handler.service.Show(ctx, request.Msg.GetQuery().GetName())
+	project, err := handler.service.Show(ctx, request.Msg.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +73,12 @@ func (handler *projectServiceHandler) Show(
 }
 
 func (handler *projectServiceHandler) Update(ctx context.Context, request *connect.Request[projectv1.ProjectServiceUpdateRequest]) (*connect.Response[projectv1.ProjectServiceUpdateResponse], error) {
-	project := request.Msg.GetData().Convert()
-	if err := handler.service.Update(ctx, request.Msg.GetQuery().GetName(), project); err != nil {
+	dataFm, err := utils.RelocateFieldMask(request.Msg.Data, request.Msg.UpdateMask, "data")
+	if err != nil {
+		return nil, err
+	}
+	data := request.Msg.GetData().Convert(dataFm)
+	if err := handler.service.Update(ctx, request.Msg.GetName(), data); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&projectv1.ProjectServiceUpdateResponse{}), nil
