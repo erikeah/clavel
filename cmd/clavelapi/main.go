@@ -26,8 +26,8 @@ func main() {
 		os.Exit(1)
 	}
 	defer cli.Close()
-	projectRepository := project.NewProjectStore(cli)
-	projectService := project.NewProjectService(projectRepository)
+	projectStore := project.NewProjectStore(cli)
+	projectService := project.NewProjectService(projectStore)
 	projectPath, projectHandler := apiserverproject.NewProjectServiceHandler(projectService)
 	mux := http.NewServeMux()
 	mux.Handle(projectPath, projectHandler)

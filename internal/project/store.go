@@ -17,6 +17,5 @@ type ProjectStore interface {
 }
 
 func NewProjectStore(cli *clientv3.Client) ProjectStore {
-	projectRepository := genericstore.NewStore[Project](cli, []string{"projects"})
-	return projectRepository
+	return genericstore.NewStore[Project](cli, []string{"projects"})
 }
