@@ -34,8 +34,8 @@
               };
               modules = [
                 /*
-                inputs.clavel.nixosModules.claveld
-                inputs.clavel.nixosModules.clavel-nixos-agent
+                  inputs.clavel.nixosModules.claveld
+                  inputs.clavel.nixosModules.clavel-nixos-agent
                 */
                 (
                   { config, pkgs, ... }:
@@ -62,13 +62,13 @@
                   }
                 )
                 /*
-                {
-                  services.claveld.enable = true;
-                  # Add clavel-nixos-agent to self manage
-                  services.clavel-nixos-agent.enable = true;
-                  services.clavel-nixos-agent.claveld.address = config.networking.hostName;
-                  services.clavel-nixos-agent.units = [ "vm1" ];
-                }
+                  {
+                    services.claveld.enable = true;
+                    # Add clavel-nixos-agent to self manage
+                    services.clavel-nixos-agent.enable = true;
+                    services.clavel-nixos-agent.claveld.address = config.networking.hostName;
+                    services.clavel-nixos-agent.units = [ "vm1" ];
+                  }
                 */
               ];
             }
@@ -77,7 +77,7 @@
             configuration = self.nixosConfigurations.claveld;
             profile = "/nix/var/nix/profiles/system";
             strategies = [
-                { type = "local"; }
+              { type = "local"; }
             ];
           };
         };

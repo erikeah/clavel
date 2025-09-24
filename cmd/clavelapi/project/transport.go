@@ -73,7 +73,7 @@ func (handler *projectServiceHandler) Show(
 }
 
 func (handler *projectServiceHandler) Update(ctx context.Context, request *connect.Request[projectv1.ProjectServiceUpdateRequest]) (*connect.Response[projectv1.ProjectServiceUpdateResponse], error) {
-	fmc := fieldmaskcommander.New(request.Msg.UpdateMask) 
+	fmc := fieldmaskcommander.New(request.Msg.UpdateMask)
 	data := request.Msg.GetData().Convert(fmc.GoTo("data"))
 	if err := handler.service.Update(ctx, request.Msg.GetName(), data); err != nil {
 		return nil, err
