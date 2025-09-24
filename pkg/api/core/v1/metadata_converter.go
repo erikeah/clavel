@@ -4,11 +4,10 @@ import (
 	"time"
 
 	"github.com/erikeah/clavel/internal/core"
-	"github.com/erikeah/clavel/internal/utils"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"github.com/erikeah/clavel/internal/fieldmaskcommander"
 )
 
-func (self *Metadata) Convert(fm *fieldmaskpb.FieldMask) *core.Metadata {
+func (self *Metadata) Convert(fm *fieldmaskcommander.FieldMaskCommander) *core.Metadata {
 	if self == nil {
 		return nil
 	}
@@ -27,7 +26,7 @@ func (self *Metadata) Convert(fm *fieldmaskpb.FieldMask) *core.Metadata {
 		}
 	}
 	meta.Generation = self.GetGeneration()
-	if utils.IsFieldMasked(fm, "finalizers") {
+	if fm.IsFieldMasked("finalizers") {
 		if self.Finalizers == nil {
 			meta.Finalizers = []string{}
 		} else {

@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
+	"github.com/erikeah/clavel/internal/fieldmaskcommander"
 	"github.com/erikeah/clavel/internal/interceptors"
 	"github.com/erikeah/clavel/internal/project"
-	"github.com/erikeah/clavel/internal/utils"
 	projectv1 "github.com/erikeah/clavel/pkg/api/project/v1"
 	"github.com/erikeah/clavel/pkg/api/project/v1/projectv1connect"
 )
@@ -73,11 +73,8 @@ func (handler *projectServiceHandler) Show(
 }
 
 func (handler *projectServiceHandler) Update(ctx context.Context, request *connect.Request[projectv1.ProjectServiceUpdateRequest]) (*connect.Response[projectv1.ProjectServiceUpdateResponse], error) {
-	dataFm, err := utils.RelocateFieldMask(request.Msg.Data, request.Msg.UpdateMask, "data")
-	if err != nil {
-		return nil, err
-	}
-	data := request.Msg.GetData().Convert(dataFm)
+	fmc := fieldmaskcommander.New(request.Msg.UpdateMask) 
+	data := request.Msg.GetData().Convert(fmc.GoTo("data"))
 	if err := handler.service.Update(ctx, request.Msg.GetName(), data); err != nil {
 		return nil, err
 	}
