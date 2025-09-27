@@ -82,7 +82,22 @@ func (handler *projectServiceHandler) Update(ctx context.Context, request *conne
 }
 
 // TODO: Set a query option to list resources first
-func (handler *projectServiceHandler) Watch(ctx context.Context, _ *connect.Request[projectv1.ProjectServiceWatchRequest], stream *connect.ServerStream[projectv1.ProjectServiceWatchResponse]) error {
+func (handler *projectServiceHandler) Watch(ctx context.Context, request *connect.Request[projectv1.ProjectServiceWatchRequest], stream *connect.ServerStream[projectv1.ProjectServiceWatchResponse]) error {
+	if request.Msg.List {
+		list, err := handler.service.List(ctx)
+		if err != nil {
+			return err
+		}
+		for _, project := range list {
+			response := &projectv1.ProjectServiceWatchResponse{
+				Data: &projectv1.Project{},
+			}
+			response.Data.Set(project)
+			if err := stream.Send(response); err != nil {
+				return err
+			}
+		}
+	}
 	projectChan, errChan := handler.service.Watch(ctx)
 	for {
 		select {

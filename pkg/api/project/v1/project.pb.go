@@ -750,6 +750,7 @@ func (*ProjectServiceUpdateResponse) Descriptor() ([]byte, []int) {
 
 type ProjectServiceWatchRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          bool                   `protobuf:"varint,1,opt,name=list,proto3" json:"list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -782,6 +783,13 @@ func (x *ProjectServiceWatchRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ProjectServiceWatchRequest.ProtoReflect.Descriptor instead.
 func (*ProjectServiceWatchRequest) Descriptor() ([]byte, []int) {
 	return file_clavel_project_v1_project_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ProjectServiceWatchRequest) GetList() bool {
+	if x != nil {
+		return x.List
+	}
+	return false
 }
 
 type ProjectServiceWatchResponse struct {
@@ -874,8 +882,9 @@ const file_clavel_project_v1_project_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\v2\x1a.clavel.project.v1.ProjectR\x04data\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"\x1e\n" +
-	"\x1cProjectServiceUpdateResponse\"\x1c\n" +
-	"\x1aProjectServiceWatchRequest\"}\n" +
+	"\x1cProjectServiceUpdateResponse\"0\n" +
+	"\x1aProjectServiceWatchRequest\x12\x12\n" +
+	"\x04list\x18\x01 \x01(\bR\x04list\"}\n" +
 	"\x1bProjectServiceWatchResponse\x12.\n" +
 	"\x04data\x18\x01 \x01(\v2\x1a.clavel.project.v1.ProjectR\x04data\x12.\n" +
 	"\x05error\x18\x02 \x01(\v2\x18.clavel.project.v1.ErrorR\x05error*{\n" +

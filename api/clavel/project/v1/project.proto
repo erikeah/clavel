@@ -72,7 +72,9 @@ message ProjectServiceUpdateRequest {
 
 message ProjectServiceUpdateResponse {}
 
-message ProjectServiceWatchRequest {}
+message ProjectServiceWatchRequest {
+  bool list = 1;
+}
 
 message ProjectServiceWatchResponse {
   Project data = 1;

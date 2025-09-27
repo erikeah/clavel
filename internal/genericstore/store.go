@@ -5,13 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/erikeah/clavel/internal/exceptions"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-type store[M any] struct {
+type StorableResource interface {
+	GetMetadataResourceVersion() string
+	SetMetadataResourceVersion(string)
+}
+
+type store[M StorableResource] struct {
 	client *clientv3.Client
 	path   []string
 }
@@ -34,6 +40,7 @@ func (s *store[M]) FindOne(ctx context.Context, name string) (*M, error) {
 	if err := json.Unmarshal(resp.Kvs[0].Value, &model); err != nil {
 		return nil, errors.Join(exceptions.Unknown, err)
 	}
+	model.SetMetadataResourceVersion(strconv.FormatInt(resp.Kvs[0].ModRevision, 10))
 	return &model, nil
 }
 
@@ -47,11 +54,12 @@ func (s *store[M]) List(ctx context.Context) ([]*M, error) {
 		return nil, exceptions.DoesNotExist
 	}
 	var list []*M
-	for _, value := range resp.Kvs {
+	for i, value := range resp.Kvs {
 		var model M
 		if err := json.Unmarshal(value.Value, &model); err != nil {
 			return nil, errors.Join(exceptions.Unknown, err)
 		}
+		model.SetMetadataResourceVersion(strconv.FormatInt(resp.Kvs[i].ModRevision, 10))
 		list = append(list, &model)
 	}
 	return list, nil
@@ -132,6 +140,6 @@ func (s *store[M]) Watch(ctx context.Context) (<-chan *M, <-chan error) {
 	return ch, errCh
 }
 
-func NewStore[M any](cli *clientv3.Client, path []string) *store[M] {
+func NewStore[M StorableResource](cli *clientv3.Client, path []string) *store[M] {
 	return &store[M]{client: cli, path: path}
 }

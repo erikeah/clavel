@@ -11,3 +11,13 @@ type Project struct {
 	Metadata *core.Metadata        `json:"metadata"`
 	Spec     *ProjectSpecification `json:"spec"`
 }
+
+func (p Project) GetMetadataResourceVersion() string {
+	return p.Metadata.GetResourceVersion()
+}
+func (p Project) IncreaseMetadataGeneration() {
+	p.Metadata.IncreaseGeneration()
+}
+func (p Project) SetMetadataResourceVersion(rv string) {
+	p.Metadata.SetResourceVersion(rv)
+}

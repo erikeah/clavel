@@ -11,7 +11,7 @@ import (
 type ProjectService struct {
 	store       ProjectStore
 	setDefaults func(*Project) error
-	merge       func(over *Project, from *Project) error
+	merge       func(over *Project, from *Project) (bool, error)
 	validate    func(*Project) error
 }
 
@@ -20,7 +20,7 @@ func (s *ProjectService) Create(ctx context.Context, data *Project) error {
 	if err := s.setDefaults(resource); err != nil {
 		return err
 	}
-	if err := s.merge(resource, data); err != nil {
+	if _, err := s.merge(resource, data); err != nil {
 		return err
 	}
 	if err := s.validate(resource); err != nil {
@@ -55,12 +55,17 @@ func (s *ProjectService) Show(ctx context.Context, name string) (*Project, error
 }
 
 func (s *ProjectService) Update(ctx context.Context, name string, data *Project) error {
+	if data == nil {
+		return exceptions.InvalidArguments
+	}
 	target, err := s.Show(ctx, name)
 	if err != nil {
 		return err
 	}
-	if err := s.merge(target, data); err != nil {
+	if hasChanged, err := s.merge(target, data); err != nil {
 		return errors.Join(exceptions.InternalFailure, err)
+	} else if !hasChanged {
+		return exceptions.NotModified
 	}
 	if err := s.validate(target); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)

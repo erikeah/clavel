@@ -18,6 +18,7 @@ func (self *Metadata) Set(meta *core.Metadata) {
 		deletionTS = meta.DeletionTimestamp.Format(time.RFC3339)
 	}
 	self.Generation = meta.Generation
+	self.ResourceVersion = meta.ResourceVersion
 	self.CreationTimestamp = creationTS
 	self.DeletionTimestamp = deletionTS
 	self.Finalizers = meta.Finalizers

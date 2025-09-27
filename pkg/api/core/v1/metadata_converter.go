@@ -7,7 +7,7 @@ import (
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
 )
 
-func (self *Metadata) Convert(fm *fieldmaskcommander.FieldMaskCommander) *core.Metadata {
+func (self *Metadata) Convert(fmc *fieldmaskcommander.FieldMaskCommander) *core.Metadata {
 	if self == nil {
 		return nil
 	}
@@ -26,7 +26,8 @@ func (self *Metadata) Convert(fm *fieldmaskcommander.FieldMaskCommander) *core.M
 		}
 	}
 	meta.Generation = self.GetGeneration()
-	if fm.IsFieldMasked("finalizers") {
+	meta.ResourceVersion = self.GetResourceVersion()
+	if fmc.IsFieldMasked("finalizers") {
 		if self.Finalizers == nil {
 			meta.Finalizers = []string{}
 		} else {

@@ -14,6 +14,9 @@ func SetDefaults_Metadata(m *Metadata) error {
 	if m.CreationTimestamp == nil {
 		now := time.Now().UTC()
 		m.CreationTimestamp = &now
+		// HINT: Following has been set because the resource is new
+		m.Generation = -1
+		m.ResourceVersion = ""
 	}
 	return nil
 }
