@@ -23,7 +23,8 @@ const (
 
 type Metadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	Generation        uint32                 `protobuf:"varint,1,opt,name=generation,proto3" json:"generation,omitempty"`
+	Generation        int64                  `protobuf:"varint,1,opt,name=generation,proto3" json:"generation,omitempty"`
+	ResourceVersion   string                 `protobuf:"bytes,5,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
 	CreationTimestamp string                 `protobuf:"bytes,2,opt,name=creation_timestamp,json=creationTimestamp,proto3" json:"creation_timestamp,omitempty"`
 	DeletionTimestamp string                 `protobuf:"bytes,3,opt,name=deletion_timestamp,json=deletionTimestamp,proto3" json:"deletion_timestamp,omitempty"`
 	Finalizers        []string               `protobuf:"bytes,4,rep,name=finalizers,proto3" json:"finalizers,omitempty"`
@@ -61,11 +62,18 @@ func (*Metadata) Descriptor() ([]byte, []int) {
 	return file_clavel_core_v1_metadata_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Metadata) GetGeneration() uint32 {
+func (x *Metadata) GetGeneration() int64 {
 	if x != nil {
 		return x.Generation
 	}
 	return 0
+}
+
+func (x *Metadata) GetResourceVersion() string {
+	if x != nil {
+		return x.ResourceVersion
+	}
+	return ""
 }
 
 func (x *Metadata) GetCreationTimestamp() string {
@@ -93,11 +101,12 @@ var File_clavel_core_v1_metadata_proto protoreflect.FileDescriptor
 
 const file_clavel_core_v1_metadata_proto_rawDesc = "" +
 	"\n" +
-	"\x1dclavel/core/v1/metadata.proto\x12\x0eclavel.core.v1\"\xa8\x01\n" +
+	"\x1dclavel/core/v1/metadata.proto\x12\x0eclavel.core.v1\"\xd3\x01\n" +
 	"\bMetadata\x12\x1e\n" +
 	"\n" +
-	"generation\x18\x01 \x01(\rR\n" +
-	"generation\x12-\n" +
+	"generation\x18\x01 \x01(\x03R\n" +
+	"generation\x12)\n" +
+	"\x10resource_version\x18\x05 \x01(\tR\x0fresourceVersion\x12-\n" +
 	"\x12creation_timestamp\x18\x02 \x01(\tR\x11creationTimestamp\x12-\n" +
 	"\x12deletion_timestamp\x18\x03 \x01(\tR\x11deletionTimestamp\x12\x1e\n" +
 	"\n" +

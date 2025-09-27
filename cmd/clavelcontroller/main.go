@@ -14,7 +14,9 @@ import (
 
 func main() {
 	client := projectv1connect.NewProjectServiceClient(http.DefaultClient, "http://localhost:8080")
-	watchResp, err := client.Watch(context.TODO(), &connect.Request[projectv1.ProjectServiceWatchRequest]{})
+	watchResp, err := client.Watch(context.TODO(), &connect.Request[projectv1.ProjectServiceWatchRequest]{
+		Msg: &projectv1.ProjectServiceWatchRequest{List: true},
+	})
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)

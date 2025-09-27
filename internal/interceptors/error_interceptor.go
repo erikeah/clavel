@@ -28,6 +28,10 @@ func ErrorInterceptor() connect.UnaryInterceptorFunc {
 				if errors.Is(err, exceptions.InternalFailure) {
 					return nil, connect.NewError(connect.CodeInternal, err)
 				}
+				// TODO: handle this exception, (No an error per se)
+				// if errors.Is(err, exceptions.NotModified) {
+				// 	return nil, connect.NewError(connect.Code(0), err)
+				// }
 				if connectErr, ok := err.(*connect.Error); ok {
 					return nil, connectErr
 				}
