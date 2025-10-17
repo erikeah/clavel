@@ -8,13 +8,13 @@ import (
 	"connectrpc.com/connect"
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
 	"github.com/erikeah/clavel/internal/interceptors"
-	"github.com/erikeah/clavel/internal/project"
+	projectapi "github.com/erikeah/clavel/internal/project/api"
 	projectv1 "github.com/erikeah/clavel/pkg/api/project/v1"
 	"github.com/erikeah/clavel/pkg/api/project/v1/projectv1connect"
 )
 
 type projectServiceHandler struct {
-	service *project.ProjectService
+	service *projectapi.ProjectService
 }
 
 func (handler *projectServiceHandler) Create(
@@ -127,7 +127,7 @@ func (handler *projectServiceHandler) Watch(ctx context.Context, request *connec
 	}
 }
 
-func NewProjectServiceHandler(service *project.ProjectService) (string, http.Handler) {
+func NewProjectServiceHandler(service *projectapi.ProjectService) (string, http.Handler) {
 	serviceHandler := &projectServiceHandler{
 		service,
 	}
