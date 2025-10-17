@@ -28,6 +28,13 @@
             with pkgs;
             mkShell {
               packages = [
+                (writers.writeBashBin "go-modulepath-deps" ''
+                  MODULEPATH=$1
+                  MODNAME=$(go list -m)
+                  go list -f '{{ join .Deps "\n" }}' $MODULEPATH | \
+                  grep $MODNAME | \
+                  sed "s|$MODNAME|.|"
+                '')
                 (writers.writeBashBin "develop-start-services" ''
                   ${pkgs.etcd}/bin/etcd \
                     --log-level warn \
@@ -35,7 +42,7 @@
                 '')
                 (writers.writeBashBin "develop-watch-clavelapi" ''
                   export PORT=8080
-                  ${pkgs.watchexec}/bin/watchexec -e go -r "go run ./cmd/clavelapi"
+                  ${pkgs.watchexec}/bin/watchexec $(for path in $(go-modulepath-deps ./cmd/clavelapi); do printf -- ' -W %s' $path; done) -r "go run ./cmd/clavelapi"
                 '')
                 (writers.writeBashBin "develop-debug-clavelapi" ''
                   export PORT=8080
@@ -43,9 +50,10 @@
                   ${pkgs.delve}/bin/dlv debug ./cmd/clavelapi
                 '')
                 (writers.writeBashBin "develop-watch-clavelcontroller" ''
-                  ${pkgs.watchexec}/bin/watchexec -e go -r "go run ./cmd/clavelcontroller"
+                  ${pkgs.watchexec}/bin/watchexec $(for path in $(go-modulepath-deps ./cmd/clavelcontroller); do printf -- ' -W %s' $path; done) -r "go run ./cmd/clavelcontroller"
                 '')
                 buf
+                coreutils
                 delve
                 etcd
                 go
