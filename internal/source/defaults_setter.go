@@ -1,11 +1,11 @@
-package project
+package source
 
 import (
 	"github.com/erikeah/clavel/internal/core"
 	"github.com/erikeah/clavel/internal/exceptions"
 )
 
-func SetDefaults_Project(p *Project) error {
+func SetDefaults_Source(p *Source) error {
 	if p == nil {
 		// TODO: Logging or sensible error
 		return exceptions.InternalFailure
@@ -17,15 +17,15 @@ func SetDefaults_Project(p *Project) error {
 		return err
 	}
 	if p.Spec == nil {
-		p.Spec = &ProjectSpecification{}
+		p.Spec = &SourceSpecification{}
 	}
-	if err := SetDefaults_ProjectSpecification(p.Spec); err != nil {
+	if err := SetDefaults_SourceSpecification(p.Spec); err != nil {
 		return err
 	}
 	return nil
 }
 
-func SetDefaults_ProjectSpecification(spec *ProjectSpecification) error {
+func SetDefaults_SourceSpecification(spec *SourceSpecification) error {
 	if spec == nil {
 		// TODO: Logging or sensible error
 		return exceptions.InternalFailure

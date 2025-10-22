@@ -1,4 +1,4 @@
-package project
+package source
 
 import (
 	"context"
@@ -8,18 +8,18 @@ import (
 	"os"
 
 	"connectrpc.com/connect"
-	"github.com/erikeah/clavel/internal/project"
-	projectv1 "github.com/erikeah/clavel/pkg/api/project/v1"
-	"github.com/erikeah/clavel/pkg/api/project/v1/projectv1connect"
+	"github.com/erikeah/clavel/internal/source"
+	sourcev1 "github.com/erikeah/clavel/pkg/api/source/v1"
+	"github.com/erikeah/clavel/pkg/api/source/v1/sourcev1connect"
 )
 
-func ProjectWatcher() (<-chan *project.Project, <-chan error) {
-	watchUpdates := make(chan *project.Project)
+func SourceWatcher() (<-chan *source.Source, <-chan error) {
+	watchUpdates := make(chan *source.Source)
 	watchErrors := make(chan error)
 	go func() {
-		client := projectv1connect.NewProjectServiceClient(http.DefaultClient, "http://localhost:8080")
-		watchResp, err := client.Watch(context.TODO(), &connect.Request[projectv1.ProjectServiceWatchRequest]{
-			Msg: &projectv1.ProjectServiceWatchRequest{List: true},
+		client := sourcev1connect.NewSourceServiceClient(http.DefaultClient, "http://localhost:8080")
+		watchResp, err := client.Watch(context.TODO(), &connect.Request[sourcev1.SourceServiceWatchRequest]{
+			Msg: &sourcev1.SourceServiceWatchRequest{List: true},
 		})
 		if err != nil {
 			slog.Error(err.Error())

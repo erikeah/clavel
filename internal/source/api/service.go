@@ -1,4 +1,4 @@
-package projectapi
+package sourceapi
 
 import (
 	"context"
@@ -6,18 +6,18 @@ import (
 	"time"
 
 	"github.com/erikeah/clavel/internal/exceptions"
-	"github.com/erikeah/clavel/internal/project"
+	"github.com/erikeah/clavel/internal/source"
 )
 
-type ProjectService struct {
-	store       ProjectStore
-	setDefaults func(*project.Project) error
-	merge       func(over *project.Project, from *project.Project) (bool, error)
-	validate    func(*project.Project) error
+type SourceService struct {
+	store       SourceStore
+	setDefaults func(*source.Source) error
+	merge       func(over *source.Source, from *source.Source) (bool, error)
+	validate    func(*source.Source) error
 }
 
-func (s *ProjectService) Create(ctx context.Context, data *project.Project) error {
-	resource := &project.Project{}
+func (s *SourceService) Create(ctx context.Context, data *source.Source) error {
+	resource := &source.Source{}
 	if err := s.setDefaults(resource); err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (s *ProjectService) Create(ctx context.Context, data *project.Project) erro
 	return nil
 }
 
-func (s *ProjectService) Delete(ctx context.Context, name string) error {
+func (s *SourceService) Delete(ctx context.Context, name string) error {
 	target, err := s.Show(ctx, name)
 	if err != nil {
 		return err
@@ -47,15 +47,15 @@ func (s *ProjectService) Delete(ctx context.Context, name string) error {
 	}
 }
 
-func (s *ProjectService) List(ctx context.Context) ([]*project.Project, error) {
+func (s *SourceService) List(ctx context.Context) ([]*source.Source, error) {
 	return s.store.List(ctx)
 }
 
-func (s *ProjectService) Show(ctx context.Context, name string) (*project.Project, error) {
+func (s *SourceService) Show(ctx context.Context, name string) (*source.Source, error) {
 	return s.store.FindOne(ctx, name)
 }
 
-func (s *ProjectService) Update(ctx context.Context, name string, data *project.Project) error {
+func (s *SourceService) Update(ctx context.Context, name string, data *source.Source) error {
 	if data == nil {
 		return exceptions.InvalidArguments
 	}
@@ -74,15 +74,15 @@ func (s *ProjectService) Update(ctx context.Context, name string, data *project.
 	return s.store.Update(ctx, name, target)
 }
 
-func (s *ProjectService) Watch(ctx context.Context) (<-chan *project.Project, <-chan error) {
+func (s *SourceService) Watch(ctx context.Context) (<-chan *source.Source, <-chan error) {
 	return s.store.Watch(ctx)
 }
 
-func NewProjectService(store ProjectStore) *ProjectService {
-	return &ProjectService{
+func NewSourceService(store SourceStore) *SourceService {
+	return &SourceService{
 		store:       store,
-		validate:    project.ValidateProject,
-		merge:       project.MergeProject,
-		setDefaults: project.SetDefaults_Project,
+		validate:    source.ValidateSource,
+		merge:       source.MergeSource,
+		setDefaults: source.SetDefaults_Source,
 	}
 }

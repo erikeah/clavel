@@ -4,25 +4,25 @@ import (
 	"fmt"
 	"time"
 
-	controller_project "github.com/erikeah/clavel/cmd/clavelcontroller/project"
+	controller_source "github.com/erikeah/clavel/cmd/clavelcontroller/source"
 	"github.com/erikeah/clavel/internal/genericdispatcher"
-	"github.com/erikeah/clavel/internal/project"
+	"github.com/erikeah/clavel/internal/source"
 )
 
 func main() {
-	projectsChan, projectErrorsChan := controller_project.ProjectWatcher()
-	projectDispatcher := genericdispatcher.NewDispatcher(
-		[]genericdispatcher.Rule[*project.Project]{
-			{func(*project.Project) bool { return true }, func(p *project.Project) error { fmt.Println(p); return nil }},
+	sourcesChan, sourceErrorsChan := controller_source.SourceWatcher()
+	sourceDispatcher := genericdispatcher.NewDispatcher(
+		[]genericdispatcher.Rule[*source.Source]{
+			{func(*source.Source) bool { return true }, func(p *source.Source) error { fmt.Println(p); return nil }},
 		},
-		projectsChan,
+		sourcesChan,
 	)
-	projectErrorsDispatcher := genericdispatcher.NewDispatcher(
+	sourceErrorsDispatcher := genericdispatcher.NewDispatcher(
 		[]genericdispatcher.Rule[error]{},
-		projectErrorsChan,
+		sourceErrorsChan,
 	)
-	projectDispatcher.Start()
-	go projectErrorsDispatcher.Start()
+	sourceDispatcher.Start()
+	go sourceErrorsDispatcher.Start()
 	for {
 		time.Sleep(time.Hour)
 	}
