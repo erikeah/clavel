@@ -1,4 +1,4 @@
-package project
+package source
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"github.com/erikeah/clavel/internal/exceptions"
 )
 
-func MergeProjectSpecification(over, from *ProjectSpecification) (bool, error) {
+func MergeSourceSpecification(over, from *SourceSpecification) (bool, error) {
 	var hasChanged bool = false
 	if over == nil {
 		// TODO: Logging or sensible error
@@ -16,14 +16,14 @@ func MergeProjectSpecification(over, from *ProjectSpecification) (bool, error) {
 	if from == nil {
 		return hasChanged, nil
 	}
-	if over.Flakeref != from.Flakeref {
-		over.Flakeref = from.Flakeref
+	if over.Reference != from.Reference {
+		over.Reference = from.Reference
 		hasChanged = true
 	}
 	return hasChanged, nil
 }
 
-func MergeProject(over, from *Project) (bool, error) {
+func MergeSource(over, from *Source) (bool, error) {
 	var hasChanged bool = false
 	if over == nil {
 		// TODO: Logging or sensible error
@@ -34,13 +34,12 @@ func MergeProject(over, from *Project) (bool, error) {
 	}
 	if from.Name != "" {
 		if from.Name != over.Name && over.Name != "" {
-			return hasChanged, errors.Join(exceptions.InvalidArguments, errors.New("name cannot be changed"))
+			return hasChanged, errors.Join(exceptions.InvalidArguments, errors.New("Name cannot be changed"))
 		}
 		over.Name = from.Name
 		hasChanged = true
 	}
-
-	if specHasChanged, err := MergeProjectSpecification(over.Spec, from.Spec); err != nil {
+	if specHasChanged, err := MergeSourceSpecification(over.Spec, from.Spec); err != nil {
 		return hasChanged, err
 	} else if specHasChanged {
 		defer over.IncreaseMetadataGeneration()

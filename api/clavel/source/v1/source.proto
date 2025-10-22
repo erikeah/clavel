@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package clavel.source.v1;
+
+import "clavel/core/v1/metadata.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/erikeah/clavel/pkg/api/source/v1;sourcev1";
+
+message Error {
+  string message = 1;
+}
+
+message SourceSpecification {
+  string reference = 1;
+}
+
+message SourceStatusSource {
+  string hash = 1;
+  string store_path = 2;
+}
+
+enum SourceStatusPhase {
+  SOURCE_STATUS_PHASE_UNSPECIFIED = 0;
+  SOURCE_STATUS_PHASE_READY = 1;
+  SOURCE_STATUS_PHASE_FAILED = 2;
+}
+
+message SourceStatus {
+  SourceStatusPhase phase = 1;
+  SourceStatusSource source = 2;
+}
+
+message Source {
+  string name = 1;
+  clavel.core.v1.Metadata metadata = 2;
+  // SourceStatus status = 3;
+  SourceSpecification spec = 4;
+}
+
+message SourceServiceShowRequest {
+  string name = 1;
+}
+
+message SourceServiceShowResponse {
+  Source data = 1;
+}
+
+message SourceServiceCreateRequest {
+  Source data = 1;
+}
+
+message SourceServiceCreateResponse {}
+
+message SourceServiceListRequest {}
+
+message SourceServiceListResponse {
+  repeated Source data = 1;
+}
+
+message SourceServiceDeleteRequest {
+  string name = 1;
+}
+
+message SourceServiceDeleteResponse {}
+
+message SourceServiceUpdateRequest {
+  string name = 1;
+  Source data = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message SourceServiceUpdateResponse {}
+
+message SourceServiceWatchRequest {
+  bool list = 1;
+}
+
+message SourceServiceWatchResponse {
+  Source data = 1;
+  Error error = 2;
+}
+
+service SourceService {
+  rpc Show(SourceServiceShowRequest) returns (SourceServiceShowResponse) {}
+  rpc List(SourceServiceListRequest) returns (SourceServiceListResponse) {}
+  rpc Create(SourceServiceCreateRequest) returns (SourceServiceCreateResponse) {}
+  rpc Update(SourceServiceUpdateRequest) returns (SourceServiceUpdateResponse) {}
+  rpc Delete(SourceServiceDeleteRequest) returns (SourceServiceDeleteResponse) {}
+  rpc Watch(SourceServiceWatchRequest) returns (stream SourceServiceWatchResponse) {}
+}
