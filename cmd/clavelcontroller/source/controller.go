@@ -3,17 +3,19 @@ package source
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"connectrpc.com/connect"
+	"github.com/erikeah/clavel/internal/genericdispatcher"
 	"github.com/erikeah/clavel/internal/source"
 	sourcev1 "github.com/erikeah/clavel/pkg/api/source/v1"
 	"github.com/erikeah/clavel/pkg/api/source/v1/sourcev1connect"
 )
 
-func SourceWatcher() (<-chan *source.Source, <-chan error) {
+func watcher() (<-chan *source.Source, <-chan error) {
 	watchUpdates := make(chan *source.Source)
 	watchErrors := make(chan error)
 	go func() {
@@ -45,4 +47,21 @@ func SourceWatcher() (<-chan *source.Source, <-chan error) {
 		}
 	}()
 	return watchUpdates, watchErrors
+}
+
+func Start() {
+	sourcesChan, sourceErrorsChan := watcher()
+	sourceDispatcher := genericdispatcher.NewDispatcher(
+		[]genericdispatcher.Rule[*source.Source]{
+			{Test: func(*source.Source) bool { return true },
+				Execute: func(p *source.Source) error { fmt.Println(p); return nil }},
+		},
+		sourcesChan,
+	)
+	sourceErrorsDispatcher := genericdispatcher.NewDispatcher(
+		[]genericdispatcher.Rule[error]{},
+		sourceErrorsChan,
+	)
+	go sourceErrorsDispatcher.Start()
+	sourceDispatcher.Start()
 }
