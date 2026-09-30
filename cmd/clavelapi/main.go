@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	apiserevaluation "github.com/erikeah/clavel/cmd/clavelapi/evaluation"
 	"github.com/erikeah/clavel/cmd/clavelapi/options"
-	apiserversource "github.com/erikeah/clavel/cmd/clavelapi/source"
-	sourceapi "github.com/erikeah/clavel/internal/source/api"
+	"github.com/erikeah/clavel/internal/core"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -26,11 +26,11 @@ func main() {
 		os.Exit(1)
 	}
 	defer cli.Close()
-	sourceStore := sourceapi.NewSourceStore(cli)
-	sourceService := sourceapi.NewSourceService(sourceStore)
-	sourcePath, sourceHandler := apiserversource.NewSourceServiceHandler(sourceService)
+	evaluationStore := core.NewEvaluationStore(cli)
+	evaluationService := core.NewEvaluationService(evaluationStore)
+	evaluationPath, evaluationHandler := apiserevaluation.NewEvaluationServiceHandler(evaluationService)
 	mux := http.NewServeMux()
-	mux.Handle(sourcePath, sourceHandler)
+	mux.Handle(evaluationPath, evaluationHandler)
 	host := ""
 	port := options.ServerPort
 	addr := fmt.Sprintf("%s:%d", host, port)

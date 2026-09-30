@@ -11,14 +11,10 @@ import (
 
 func main() {
 	ctx := context.Background()
-	results, err := utils.ParallelNixEval(ctx, os.Args[1])
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		for result := range results {
-			if data, err := json.Marshal(result); err == nil {
-				fmt.Println(string(data))
-			}
+	results := utils.ParallelNixEval(ctx, os.Args[1:])
+	for result := range results {
+		if data, err := json.Marshal(result); err == nil {
+			fmt.Println(string(data))
 		}
 	}
 }

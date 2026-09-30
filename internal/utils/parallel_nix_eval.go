@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os/exec"
 	"sync"
 )
@@ -43,30 +42,23 @@ func eval(ctx context.Context, evaluationResult any, flakeRef string, extraArgs 
 	return nil
 }
 
-func ParallelNixEval(ctx context.Context, flakeRef string) (chan *nixEvaluationResult, error) {
-	var attrNames []string
-	err := eval(ctx, &attrNames, flakeRef, "--apply", "builtins.attrNames")
-	if err != nil {
-		return nil, err
-	}
+func ParallelNixEval(ctx context.Context, references []string) <-chan *nixEvaluationResult {
+	var results = make(chan *nixEvaluationResult, len(references))
 	var wg sync.WaitGroup
-	var results = make(chan *nixEvaluationResult, len(attrNames))
-	for _, attrName := range attrNames {
+	for _, reference := range references {
 		wg.Add(1)
-		go func(name string) {
+		go func(ref string) {
 			defer wg.Done()
 			var value any
-			applyFunc := fmt.Sprintf("arg: arg.%s", name)
-			err := eval(ctx, &value, flakeRef, "--apply", applyFunc)
-			if err != nil {
+			if err := eval(ctx, &value, ref); err != nil {
 				results <- &nixEvaluationResult{Value: nil, Err: err}
 			}
 			results <- &nixEvaluationResult{Value: value}
-		}(attrName)
+		}(reference)
 	}
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
-	return results, nil
+	return results
 }

@@ -3,11 +3,11 @@ package main
 import (
 	"time"
 
-	sourceController "github.com/erikeah/clavel/cmd/clavelcontroller/source"
+	evaluationController "github.com/erikeah/clavel/cmd/clavelcontroller/evaluation"
 )
 
 func main() {
-	go sourceController.Start()
+	go evaluationController.Start()
 	for {
 		time.Sleep(time.Hour)
 	}

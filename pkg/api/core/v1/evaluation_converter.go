@@ -1,24 +1,24 @@
-package sourcev1
+package corev1
 
 import (
+	"github.com/erikeah/clavel/internal/core"
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
-	"github.com/erikeah/clavel/internal/source"
 )
 
-func (self *SourceSpecification) Convert() *source.SourceSpecification {
+func (self *EvaluationSpecification) Convert() *core.EvaluationSpecification {
 	if self == nil {
 		return nil
 	}
-	return &source.SourceSpecification{
+	return &core.EvaluationSpecification{
 		Reference: self.Reference,
 	}
 }
 
-func (self *Source) Convert(fmc *fieldmaskcommander.FieldMaskCommander) *source.Source {
+func (self *Evaluation) Convert(fmc *fieldmaskcommander.FieldMaskCommander) *core.Evaluation {
 	if self == nil {
 		return nil
 	}
-	conversion := &source.Source{}
+	conversion := &core.Evaluation{}
 	conversion.Name = self.Name
 	metadataFmc := fmc.GoTo("metadata")
 	conversion.Metadata = self.Metadata.Convert(metadataFmc)
