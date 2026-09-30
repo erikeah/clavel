@@ -20,3 +20,31 @@ func SetDefaults_Metadata(m *Metadata) error {
 	}
 	return nil
 }
+
+func SetDefaults_Evaluation(p *Evaluation) error {
+	if p == nil {
+		// TODO: Logging or sensible error
+		return exceptions.InternalFailure
+	}
+	if p.Metadata == nil {
+		p.Metadata = &Metadata{}
+	}
+	if err := SetDefaults_Metadata(p.Metadata); err != nil {
+		return err
+	}
+	if p.Spec == nil {
+		p.Spec = &EvaluationSpecification{}
+	}
+	if err := SetDefaults_EvaluationSpecification(p.Spec); err != nil {
+		return err
+	}
+	return nil
+}
+
+func SetDefaults_EvaluationSpecification(spec *EvaluationSpecification) error {
+	if spec == nil {
+		// TODO: Logging or sensible error
+		return exceptions.InternalFailure
+	}
+	return nil
+}

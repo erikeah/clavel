@@ -21,7 +21,7 @@ func setOptionsFromEnvVar(config *ClavelapiConfig) {
 func setOptionsFromArgs() {
 	args := os.Args
 	if len(args) != 2 {
-		slog.Info("usage: clavelapi <source>")
+		slog.Info("usage: clavelapi <evaluation>")
 		os.Exit(1)
 	}
 }

@@ -2,6 +2,26 @@ package core
 
 import "time"
 
+type EvaluationSpecification struct {
+	Reference string `json:"reference"`
+}
+
+type Evaluation struct {
+	Name     string                   `json:"name"`
+	Metadata *Metadata                `json:"metadata"`
+	Spec     *EvaluationSpecification `json:"spec"`
+}
+
+func (p Evaluation) GetMetadataResourceVersion() string {
+	return p.Metadata.GetResourceVersion()
+}
+func (p Evaluation) IncreaseMetadataGeneration() {
+	p.Metadata.IncreaseGeneration()
+}
+func (p Evaluation) SetMetadataResourceVersion(rv string) {
+	p.Metadata.SetResourceVersion(rv)
+}
+
 type Metadata struct {
 	generationHasIncrease bool
 	Generation            int64      `json:"generation"`

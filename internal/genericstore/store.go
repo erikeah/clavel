@@ -51,7 +51,7 @@ func (s *store[M]) List(ctx context.Context) ([]*M, error) {
 		return nil, errors.Join(exceptions.ExternalFailure, err)
 	}
 	if len(resp.Kvs) < 1 {
-		return nil, exceptions.DoesNotExist
+		return []*M{}, nil
 	}
 	var list []*M
 	for i, value := range resp.Kvs {

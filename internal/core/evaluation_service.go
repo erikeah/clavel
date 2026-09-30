@@ -1,4 +1,4 @@
-package sourceapi
+package core
 
 import (
 	"context"
@@ -6,18 +6,17 @@ import (
 	"time"
 
 	"github.com/erikeah/clavel/internal/exceptions"
-	"github.com/erikeah/clavel/internal/source"
 )
 
-type SourceService struct {
-	store       SourceStore
-	setDefaults func(*source.Source) error
-	merge       func(over *source.Source, from *source.Source) (bool, error)
-	validate    func(*source.Source) error
+type EvaluationService struct {
+	store       EvaluationStore
+	setDefaults func(*Evaluation) error
+	merge       func(over *Evaluation, from *Evaluation) (bool, error)
+	validate    func(*Evaluation) error
 }
 
-func (s *SourceService) Create(ctx context.Context, data *source.Source) error {
-	resource := &source.Source{}
+func (s *EvaluationService) Create(ctx context.Context, data *Evaluation) error {
+	resource := &Evaluation{}
 	if err := s.setDefaults(resource); err != nil {
 		return err
 	}
@@ -33,7 +32,7 @@ func (s *SourceService) Create(ctx context.Context, data *source.Source) error {
 	return nil
 }
 
-func (s *SourceService) Delete(ctx context.Context, name string) error {
+func (s *EvaluationService) Delete(ctx context.Context, name string) error {
 	target, err := s.Show(ctx, name)
 	if err != nil {
 		return err
@@ -47,15 +46,15 @@ func (s *SourceService) Delete(ctx context.Context, name string) error {
 	}
 }
 
-func (s *SourceService) List(ctx context.Context) ([]*source.Source, error) {
+func (s *EvaluationService) List(ctx context.Context) ([]*Evaluation, error) {
 	return s.store.List(ctx)
 }
 
-func (s *SourceService) Show(ctx context.Context, name string) (*source.Source, error) {
+func (s *EvaluationService) Show(ctx context.Context, name string) (*Evaluation, error) {
 	return s.store.FindOne(ctx, name)
 }
 
-func (s *SourceService) Update(ctx context.Context, name string, data *source.Source) error {
+func (s *EvaluationService) Update(ctx context.Context, name string, data *Evaluation) error {
 	if data == nil {
 		return exceptions.InvalidArguments
 	}
@@ -74,15 +73,15 @@ func (s *SourceService) Update(ctx context.Context, name string, data *source.So
 	return s.store.Update(ctx, name, target)
 }
 
-func (s *SourceService) Watch(ctx context.Context) (<-chan *source.Source, <-chan error) {
+func (s *EvaluationService) Watch(ctx context.Context) (<-chan *Evaluation, <-chan error) {
 	return s.store.Watch(ctx)
 }
 
-func NewSourceService(store SourceStore) *SourceService {
-	return &SourceService{
+func NewEvaluationService(store EvaluationStore) *EvaluationService {
+	return &EvaluationService{
 		store:       store,
-		validate:    source.ValidateSource,
-		merge:       source.MergeSource,
-		setDefaults: source.SetDefaults_Source,
+		validate:    ValidateEvaluation,
+		merge:       MergeEvaluation,
+		setDefaults: SetDefaults_Evaluation,
 	}
 }

@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package clavel.core.v1;
+
+import "clavel/core/v1/metadata.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";
+
+message Error {
+  string message = 1;
+}
+
+message EvaluationSpecification {
+  string reference = 1;
+}
+
+message EvaluationStatusResult {
+  string hash = 1;
+  string store_path = 2;
+}
+
+enum EvaluationStatusPhase {
+  EVALUATION_STATUS_PHASE_UNSPECIFIED = 0;
+  EVALUATION_STATUS_PHASE_READY = 1;
+  EVALUATION_STATUS_PHASE_FAILED = 2;
+}
+
+message EvaluationStatus {
+  EvaluationStatusPhase phase = 1;
+  EvaluationStatusResult result = 2;
+}
+
+message Evaluation {
+  string name = 1;
+  Metadata metadata = 2;
+  // EvaluationStatus status = 3;
+  EvaluationSpecification spec = 4;
+}
+
+message EvaluationServiceShowRequest {
+  string name = 1;
+}
+
+message EvaluationServiceShowResponse {
+  Evaluation data = 1;
+}
+
+message EvaluationServiceCreateRequest {
+  Evaluation data = 1;
+}
+
+message EvaluationServiceCreateResponse {}
+
+message EvaluationServiceListRequest {}
+
+message EvaluationServiceListResponse {
+  repeated Evaluation data = 1;
+}
+
+message EvaluationServiceDeleteRequest {
+  string name = 1;
+}
+
+message EvaluationServiceDeleteResponse {}
+
+message EvaluationServiceUpdateRequest {
+  string name = 1;
+  Evaluation data = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message EvaluationServiceUpdateResponse {}
+
+message EvaluationServiceWatchRequest {
+  bool list = 1;
+}
+
+message EvaluationServiceWatchResponse {
+  Evaluation data = 1;
+  Error error = 2;
+}
+
+service EvaluationService {
+  rpc Show(EvaluationServiceShowRequest) returns (EvaluationServiceShowResponse) {}
+  rpc List(EvaluationServiceListRequest) returns (EvaluationServiceListResponse) {}
+  rpc Create(EvaluationServiceCreateRequest) returns (EvaluationServiceCreateResponse) {}
+  rpc Update(EvaluationServiceUpdateRequest) returns (EvaluationServiceUpdateResponse) {}
+  rpc Delete(EvaluationServiceDeleteRequest) returns (EvaluationServiceDeleteResponse) {}
+  rpc Watch(EvaluationServiceWatchRequest) returns (stream EvaluationServiceWatchResponse) {}
+}
