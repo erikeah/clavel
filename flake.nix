@@ -45,6 +45,9 @@
                 (writers.writeBashBin "develop-watch-clavelcontroller" ''
                   ${pkgs.watchexec}/bin/watchexec --delay-run 2s -e go -r "go run ./cmd/clavelcontroller"
                 '')
+                (writers.writeBashBin "clavel-gen" ''
+                  exec ${pkgs.go}/bin/go run ./cmd/clavel-gen "$@"
+                '')
                 buf
                 coreutils
                 delve
@@ -60,6 +63,8 @@
       flake = {
         flakeModule = ./flake-module.nix;
         lib = import ./lib.nix { nixpkgs-lib = inputs.nixpkgs.lib; };
+        clavelModules.nixos = import ./modules/nixos.nix;
+        clavelActions.nixos = import ./modules/actions/nixos.nix { };
       };
     };
 }

@@ -8,3 +8,12 @@ plugins:
     out: .
     opt:
     - module=github.com/erikeah/clavel
+  - local: clavel-gen
+    out: .
+    opt:
+    - name=nixos
+    - group=clavel.io
+    - version=v1
+    - kind=NixosUnit
+    - plural=nixosunits
+    - spec_message=clavel.units.nixos.v1.NixosUnitSpec

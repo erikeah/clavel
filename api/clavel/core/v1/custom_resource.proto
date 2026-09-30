@@ -1,0 +1,157 @@
+syntax = "proto3";
+
+package clavel.core.v1;
+
+import "clavel/core/v1/evaluation.proto";
+import "clavel/core/v1/metadata.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";
+
+// CustomResourceDefinition registers a new resource kind. Schemas are
+// immutable once registered: reapplying an identical definition is a no-op,
+// while a conflicting one is rejected.
+message CustomResourceDefinition {
+  string group = 1;
+  string version = 2;
+  // Kind name, e.g. "NixosUnit". Acts as the storage key within group/version.
+  string kind = 3;
+  // Plural used in resource paths, e.g. "nixosunits".
+  string plural = 4;
+  // Serialized google.protobuf.FileDescriptorSet containing the spec message.
+  bytes schema = 5;
+  // Fully-qualified message name of the spec within schema, e.g.
+  // "clavel.units.nixos.v1.NixosUnitSpec".
+  string spec_message = 6;
+  // Flake reference to the action module used by the controller.
+  string action_module = 7;
+  Metadata metadata = 8;
+}
+
+// Resource is an instance of a registered kind. The spec is a
+// protojson-encoded message validated by clavelapi against the kind's schema.
+message Resource {
+  string group = 1;
+  string version = 2;
+  string plural = 3;
+  // Kind is derived by clavelapi from the registered CustomResourceDefinition.
+  string kind = 4;
+  string name = 5;
+  Metadata metadata = 6;
+  bytes spec = 7;
+}
+
+message CustomResourceDefinitionServiceShowRequest {
+  string group = 1;
+  string version = 2;
+  string kind = 3;
+}
+
+message CustomResourceDefinitionServiceShowResponse {
+  CustomResourceDefinition data = 1;
+}
+
+message CustomResourceDefinitionServiceListRequest {}
+
+message CustomResourceDefinitionServiceListResponse {
+  repeated CustomResourceDefinition data = 1;
+}
+
+message CustomResourceDefinitionServiceCreateRequest {
+  CustomResourceDefinition data = 1;
+}
+
+message CustomResourceDefinitionServiceCreateResponse {}
+
+message CustomResourceDefinitionServiceDeleteRequest {
+  string group = 1;
+  string version = 2;
+  string kind = 3;
+}
+
+message CustomResourceDefinitionServiceDeleteResponse {}
+
+message CustomResourceDefinitionServiceWatchRequest {
+  bool list = 1;
+}
+
+message CustomResourceDefinitionServiceWatchResponse {
+  CustomResourceDefinition data = 1;
+  Error error = 2;
+}
+
+service CustomResourceDefinitionService {
+  rpc Show(CustomResourceDefinitionServiceShowRequest) returns (CustomResourceDefinitionServiceShowResponse) {}
+  rpc List(CustomResourceDefinitionServiceListRequest) returns (CustomResourceDefinitionServiceListResponse) {}
+  rpc Create(CustomResourceDefinitionServiceCreateRequest) returns (CustomResourceDefinitionServiceCreateResponse) {}
+  rpc Delete(CustomResourceDefinitionServiceDeleteRequest) returns (CustomResourceDefinitionServiceDeleteResponse) {}
+  rpc Watch(CustomResourceDefinitionServiceWatchRequest) returns (stream CustomResourceDefinitionServiceWatchResponse) {}
+}
+
+message CustomResourceServiceShowRequest {
+  string group = 1;
+  string version = 2;
+  string plural = 3;
+  string name = 4;
+}
+
+message CustomResourceServiceShowResponse {
+  Resource data = 1;
+}
+
+message CustomResourceServiceListRequest {
+  string group = 1;
+  string version = 2;
+  string plural = 3;
+}
+
+message CustomResourceServiceListResponse {
+  repeated Resource data = 1;
+}
+
+message CustomResourceServiceCreateRequest {
+  Resource data = 1;
+}
+
+message CustomResourceServiceCreateResponse {}
+
+message CustomResourceServiceUpdateRequest {
+  string group = 1;
+  string version = 2;
+  string plural = 3;
+  string name = 4;
+  Resource data = 5;
+  google.protobuf.FieldMask update_mask = 6;
+}
+
+message CustomResourceServiceUpdateResponse {}
+
+message CustomResourceServiceDeleteRequest {
+  string group = 1;
+  string version = 2;
+  string plural = 3;
+  string name = 4;
+}
+
+message CustomResourceServiceDeleteResponse {}
+
+message CustomResourceServiceWatchRequest {
+  string group = 1;
+  string version = 2;
+  string plural = 3;
+  bool list = 4;
+}
+
+message CustomResourceServiceWatchResponse {
+  Resource data = 1;
+  Error error = 2;
+}
+
+service CustomResourceService {
+  rpc Show(CustomResourceServiceShowRequest) returns (CustomResourceServiceShowResponse) {}
+  rpc List(CustomResourceServiceListRequest) returns (CustomResourceServiceListResponse) {}
+  rpc Create(CustomResourceServiceCreateRequest) returns (CustomResourceServiceCreateResponse) {}
+  rpc Update(CustomResourceServiceUpdateRequest) returns (CustomResourceServiceUpdateResponse) {}
+  rpc Delete(CustomResourceServiceDeleteRequest) returns (CustomResourceServiceDeleteResponse) {}
+  rpc Watch(CustomResourceServiceWatchRequest) returns (stream CustomResourceServiceWatchResponse) {}
+}

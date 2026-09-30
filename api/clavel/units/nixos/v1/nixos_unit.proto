@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package clavel.units.nixos.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/api/units/nixos/v1;nixosv1";
+
+// NixosUnitSpec is the spec of a NixosUnit custom resource. It references an
+// Evaluation whose flake reference yields a NixOS toplevel derivation.
+message NixosUnitSpec {
+  // Name of the referenced Evaluation.
+  string evaluation = 1;
+  // System profile to activate, e.g. "/nix/var/nix/profiles/system".
+  string profile = 2;
+  repeated Strategy strategies = 3;
+}
+
+message Strategy {
+  // Deployment strategy type, e.g. "local" or "ssh".
+  string type = 1;
+  // Target host for remote strategies.
+  string host = 2;
+}

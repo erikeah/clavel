@@ -12,6 +12,11 @@ in
         default = { };
         description = "";
       };
+      clavelConfigurations = mkOption {
+        type = types.lazyAttrsOf types.attrs;
+        default = { };
+        description = "Named clavel configurations produced by lib.clavelDefinition.";
+      };
     };
   };
 }

@@ -1,14 +1,9 @@
 package main
 
-import (
-	"time"
-
-	evaluationController "github.com/erikeah/clavel/cmd/clavelcontroller/evaluation"
-)
+import "log/slog"
 
 func main() {
-	go evaluationController.Start()
-	for {
-		time.Sleep(time.Hour)
-	}
+	slog.Info("clavelcontroller starting")
+	controller := newController()
+	controller.Start()
 }

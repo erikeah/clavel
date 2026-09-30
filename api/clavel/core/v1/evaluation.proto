@@ -34,7 +34,7 @@ message EvaluationStatus {
 message Evaluation {
   string name = 1;
   Metadata metadata = 2;
-  // EvaluationStatus status = 3;
+  EvaluationStatus status = 3;
   EvaluationSpecification spec = 4;
 }
 
