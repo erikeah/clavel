@@ -11,6 +11,14 @@ func (self *EvaluationSpecification) Set(spec *core.EvaluationSpecification) {
 	self.Reference = spec.Reference
 }
 
+func (self *EvaluationStatus) Set(status *core.EvaluationStatus) {
+	if status == nil {
+		return
+	}
+	self.Phase = EvaluationStatusPhase(status.Phase)
+	self.StorePath = status.StorePath
+}
+
 func (self *Evaluation) Set(p *core.Evaluation) {
 	if p == nil {
 		return
@@ -19,9 +27,13 @@ func (self *Evaluation) Set(p *core.Evaluation) {
 	if self.Spec == nil {
 		self.Spec = &EvaluationSpecification{}
 	}
-	self.Spec.Set(p.Spec)
+	self.Spec.Set(&p.Spec)
+	if self.Status == nil {
+		self.Status = &EvaluationStatus{}
+	}
+	self.Status.Set(&p.Status)
 	if self.Metadata == nil {
 		self.Metadata = &Metadata{}
 	}
-	self.Metadata.Set(p.Metadata)
+	self.Metadata.Set(&p.Metadata)
 }

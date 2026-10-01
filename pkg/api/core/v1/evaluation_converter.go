@@ -5,12 +5,29 @@ import (
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
 )
 
-func (self *EvaluationSpecification) Convert() *core.EvaluationSpecification {
+func (self *EvaluationSpecification) Convert() core.EvaluationSpecification {
 	if self == nil {
-		return nil
+		return core.EvaluationSpecification{}
 	}
-	return &core.EvaluationSpecification{
+	return core.EvaluationSpecification{
 		Reference: self.Reference,
+	}
+}
+
+func (self *EvaluationStatusPhase) Convert() core.EvaluationPhase {
+	if self == nil {
+		return core.EvaluationPhaseUnspecified
+	}
+	return core.EvaluationPhase(*self)
+}
+
+func (self *EvaluationStatus) Convert() core.EvaluationStatus {
+	if self == nil {
+		return core.EvaluationStatus{}
+	}
+	return core.EvaluationStatus{
+		Phase:     self.Phase.Convert(),
+		StorePath: self.StorePath,
 	}
 }
 
@@ -23,5 +40,6 @@ func (self *Evaluation) Convert(fmc *fieldmaskcommander.FieldMaskCommander) *cor
 	metadataFmc := fmc.GoTo("metadata")
 	conversion.Metadata = self.Metadata.Convert(metadataFmc)
 	conversion.Spec = self.Spec.Convert()
+	conversion.Status = self.Status.Convert()
 	return conversion
 }

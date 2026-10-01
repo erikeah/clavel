@@ -12,7 +12,7 @@ type EvaluationService struct {
 	store       EvaluationStore
 	setDefaults func(*Evaluation) error
 	merge       func(over *Evaluation, from *Evaluation) (bool, error)
-	validate    func(*Evaluation) error
+	validate    func(Evaluation) error
 }
 
 func (s *EvaluationService) Create(ctx context.Context, data *Evaluation) error {
@@ -23,7 +23,8 @@ func (s *EvaluationService) Create(ctx context.Context, data *Evaluation) error 
 	if _, err := s.merge(resource, data); err != nil {
 		return err
 	}
-	if err := s.validate(resource); err != nil {
+	resource.Status = EvaluationStatus{}
+	if err := s.validate(*resource); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)
 	}
 	if err := s.store.Create(ctx, resource.Name, resource); err != nil {
@@ -67,7 +68,7 @@ func (s *EvaluationService) Update(ctx context.Context, name string, data *Evalu
 	} else if !hasChanged {
 		return exceptions.NotModified
 	}
-	if err := s.validate(target); err != nil {
+	if err := s.validate(*target); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)
 	}
 	return s.store.Update(ctx, name, target)

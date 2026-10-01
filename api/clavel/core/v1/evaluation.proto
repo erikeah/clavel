@@ -15,26 +15,22 @@ message EvaluationSpecification {
   string reference = 1;
 }
 
-message EvaluationStatusResult {
-  string hash = 1;
-  string store_path = 2;
-}
-
 enum EvaluationStatusPhase {
   EVALUATION_STATUS_PHASE_UNSPECIFIED = 0;
-  EVALUATION_STATUS_PHASE_READY = 1;
+  EVALUATION_STATUS_PHASE_SUCCEEDED = 1;
   EVALUATION_STATUS_PHASE_FAILED = 2;
+  EVALUATION_STATUS_PHASE_PENDING = 3;
 }
 
 message EvaluationStatus {
   EvaluationStatusPhase phase = 1;
-  EvaluationStatusResult result = 2;
+  string store_path = 2;
 }
 
 message Evaluation {
   string name = 1;
   Metadata metadata = 2;
-  // EvaluationStatus status = 3;
+  EvaluationStatus status = 3;
   EvaluationSpecification spec = 4;
 }
 

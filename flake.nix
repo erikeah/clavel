@@ -53,6 +53,7 @@
                 gopls
                 protoc-gen-connect-go
                 protoc-gen-go
+                nixd
                 watchexec
               ];
             };

@@ -7,11 +7,11 @@ import (
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
 )
 
-func (self *Metadata) Convert(fmc *fieldmaskcommander.FieldMaskCommander) *core.Metadata {
+func (self *Metadata) Convert(fmc *fieldmaskcommander.FieldMaskCommander) core.Metadata {
 	if self == nil {
-		return nil
+		return core.Metadata{}
 	}
-	meta := &core.Metadata{}
+	meta := core.Metadata{}
 	var creationTS, deletionTS *time.Time
 	if self.CreationTimestamp != "" {
 		t, err := time.Parse(time.RFC3339, self.CreationTimestamp)
