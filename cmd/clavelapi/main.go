@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	apiserevaluation "github.com/erikeah/clavel/cmd/clavelapi/evaluation"
 	"github.com/erikeah/clavel/cmd/clavelapi/options"
 	"github.com/erikeah/clavel/internal/core"
+	apiserevaluation "github.com/erikeah/clavel/internal/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
