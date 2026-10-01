@@ -1,14 +1,20 @@
 package main
 
 import (
-	"time"
+	"context"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 
-	evaluationController "github.com/erikeah/clavel/cmd/clavelcontroller/evaluation"
+	evaluationController "github.com/erikeah/clavel/internal/controller/evaluation"
 )
 
 func main() {
-	go evaluationController.Start()
-	for {
-		time.Sleep(time.Hour)
-	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	slog.Info("clavelcontroller starting")
+	evaluationController.Run(ctx)
+	slog.Info("clavelcontroller stopped")
 }
