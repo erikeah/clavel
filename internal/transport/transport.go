@@ -8,7 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/erikeah/clavel/internal/core"
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
-	"github.com/erikeah/clavel/internal/interceptors"
+	"github.com/erikeah/clavel/internal/transport/interceptors"
 	corev1 "github.com/erikeah/clavel/pkg/api/core/v1"
 	"github.com/erikeah/clavel/pkg/api/core/v1/corev1connect"
 )
