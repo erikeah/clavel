@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Clavel evaluates Nix flake references — `evaluation`s — into deployment descriptions (early-stage WIP). A flake reference already encodes source and target in one string (`<source>#<evaluation-target>`); `Evaluation` is the core entity, stored via the API. Two runtime binaries: `clavelapi` (Connect/gRPC-over-h2c API backed by etcd) and `clavelcontroller` (watches evaluations via the API and dispatches with rules). `nix` is a **runtime** dependency, not just a build tool — evaluation happens via `nix eval --eval-cache --json`.
+Clavel evaluates Nix flake references — `evaluation`s — into deployment descriptions (early-stage WIP). A flake reference already encodes source and target in one string (`<source>#<evaluation-target>`); `Evaluation` is the core entity, stored via the API. Two runtime binaries: `clavelapi` (Connect/gRPC-over-h2c API backed by etcd) and `clavelcontroller` (watches evaluations via the API and reconciles them). `nix` is a **runtime** dependency, not just a build tool — evaluation happens via `nix eval --eval-cache --json`.
 
 ## Commands
 
@@ -31,8 +31,10 @@ Integration flow: start etcd → `clavelapi` (PORT 8080) → `clavelcontroller`.
 ## Structure
 
 - `cmd/clavelapi` — API server; `PORT` env (default 80), no TLS; Connect RPC over h2c.
-- `cmd/clavelcontroller` — connects to clavelapi's Watch RPC and fans events into `internal/genericdispatcher` rules.
+- `cmd/clavelcontroller` — connects to clavelapi's Watch RPC; a Kubernetes-style controller (`internal/controller`: informer cache → rate-limited dedup workqueue → worker pool) reconciles evaluations.
 - `internal/genericstore` — generic etcd-backed KV store: resources JSON-serialized under `/<path>/<name>`; `resource_version` = etcd `ModRevision`.
+- `internal/controller` — generic K8s-style controller plumbing: `WorkQueue` (rate-limited, deduplicating, retry backoff), `Informer` (watch-backed cache), and `Controller` (worker pool running a `ReconcileFunc` per key).
+- `internal/controller/evaluation` — the per-resource `Evaluation` controller: wires the generic plumbing to the API's Watch RPC and runs reconcile (mirrors k8s `pkg/controller/<kind>`).
 - `internal/core` — domain types (Metadata, Evaluation) plus the `Evaluation` service/store; `internal/fieldmaskcommander` — field-mask updates.
 - `internal/utils/parallel_nix_eval.go` — calls out to `nix eval` for evaluation references (`<source>#<evaluation-target>`).
 - `example/` — a consumer flake importing this repo as `path:../`, exercising `flakeModule` + `lib.mkNixosUnit`; useful for sanity-checking flake-level changes.
