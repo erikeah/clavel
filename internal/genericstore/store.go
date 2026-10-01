@@ -27,45 +27,48 @@ func (s *store[M]) genPath(name string) string {
 	return "/" + strings.Join(keyPath, "/")
 }
 
-func (s *store[M]) FindOne(ctx context.Context, name string) (*M, error) {
+func (s *store[M]) FindOne(ctx context.Context, name string) (M, error) {
 	kv := s.client.KV
 	resp, err := kv.Get(ctx, s.genPath(name))
 	if err != nil {
-		return nil, errors.Join(exceptions.ExternalFailure, err)
+		var zero M
+		return zero, errors.Join(exceptions.ExternalFailure, err)
 	}
 	if len(resp.Kvs) < 1 {
-		return nil, exceptions.DoesNotExist
+		var zero M
+		return zero, exceptions.DoesNotExist
 	}
 	var model M
 	if err := json.Unmarshal(resp.Kvs[0].Value, &model); err != nil {
-		return nil, errors.Join(exceptions.Unknown, err)
+		var zero M
+		return zero, errors.Join(exceptions.Unknown, err)
 	}
 	model.SetMetadataResourceVersion(strconv.FormatInt(resp.Kvs[0].ModRevision, 10))
-	return &model, nil
+	return model, nil
 }
 
-func (s *store[M]) List(ctx context.Context) ([]*M, error) {
+func (s *store[M]) List(ctx context.Context) ([]M, error) {
 	kv := s.client.KV
 	resp, err := kv.Get(ctx, s.genPath(""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, errors.Join(exceptions.ExternalFailure, err)
 	}
 	if len(resp.Kvs) < 1 {
-		return []*M{}, nil
+		return []M{}, nil
 	}
-	var list []*M
+	var list []M
 	for i, value := range resp.Kvs {
 		var model M
 		if err := json.Unmarshal(value.Value, &model); err != nil {
 			return nil, errors.Join(exceptions.Unknown, err)
 		}
 		model.SetMetadataResourceVersion(strconv.FormatInt(resp.Kvs[i].ModRevision, 10))
-		list = append(list, &model)
+		list = append(list, model)
 	}
 	return list, nil
 }
 
-func (s *store[M]) Create(ctx context.Context, name string, data *M) error {
+func (s *store[M]) Create(ctx context.Context, name string, data M) error {
 	kv := s.client.KV
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -98,7 +101,7 @@ func (s *store[M]) Delete(ctx context.Context, name string) error {
 	return nil
 }
 
-func (s *store[M]) Update(ctx context.Context, key string, data *M) error {
+func (s *store[M]) Update(ctx context.Context, key string, data M) error {
 	kv := s.client.KV
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -112,8 +115,8 @@ func (s *store[M]) Update(ctx context.Context, key string, data *M) error {
 	return nil
 }
 
-func (s *store[M]) Watch(ctx context.Context) (<-chan *M, <-chan error) {
-	ch := make(chan *M)
+func (s *store[M]) Watch(ctx context.Context) (<-chan M, <-chan error) {
+	ch := make(chan M)
 	errCh := make(chan error, 1) // Buffered channel for errors
 
 	go func() {
@@ -132,7 +135,7 @@ func (s *store[M]) Watch(ctx context.Context) (<-chan *M, <-chan error) {
 						errCh <- errors.Join(exceptions.Unknown, err)
 						slog.Error(err.Error())
 					}
-					ch <- &model
+					ch <- model
 				}
 			}
 		}

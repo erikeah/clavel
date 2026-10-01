@@ -17,5 +17,5 @@ type EvaluationStore interface {
 }
 
 func NewEvaluationStore(cli *clientv3.Client) EvaluationStore {
-	return genericstore.NewStore[Evaluation](cli, []string{"evaluations"})
+	return genericstore.NewStore[*Evaluation](cli, []string{"evaluations"})
 }
