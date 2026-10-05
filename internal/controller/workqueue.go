@@ -2,6 +2,7 @@ package controller
 
 import (
 	"container/heap"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -9,8 +10,8 @@ import (
 )
 
 const (
-	defaultRetryBaseDelay = 5 * time.Millisecond
-	defaultRetryMaxDelay  = 1000 * time.Second
+	defaultRetryBaseDelay = time.Second
+	defaultRetryMaxDelay  = 30 * time.Minute
 )
 
 // WorkQueue is a rate-limited, deduplicating queue of string keys, mirroring
@@ -18,8 +19,12 @@ const (
 type WorkQueue interface {
 	// Add enqueues a key. A key already waiting in the queue is not enqueued twice.
 	Add(key string)
+	// AddAfter enqueues a key after delay. A key already waiting to be added
+	// again is not rescheduled; the earliest pending delay wins.
+	AddAfter(key string, delay time.Duration)
 	// AddRateLimited enqueues a key after a per-key retry backoff and an optional
-	// global rate limiter delay.
+	// global rate limiter delay. Requeues a key that is currently processing;
+	// delivery happens once the delay elapses or Done runs, whichever is later.
 	AddRateLimited(key string)
 	// Forget resets the retry/backoff bookkeeping for a key.
 	Forget(key string)
@@ -78,25 +83,32 @@ type workQueue struct {
 	mu         sync.Mutex
 	cond       *sync.Cond
 	ready      []string
-	delayed    delayedHeap
 	dirty      map[string]bool
 	processing map[string]bool
 	retries    map[string]int
+
+	// waitingForAdd tracks keys with a pending delayed add so each key has at
+	// most one entry in delayed.
+	waitingForAdd map[string]bool
+	delayed       delayedHeap
 
 	limiter   *rate.Limiter
 	baseDelay time.Duration
 	maxDelay  time.Duration
 
 	shutDown bool
+	stopCh   chan struct{}
 }
 
 func NewWorkQueue(options ...WorkQueueOption) WorkQueue {
 	q := &workQueue{
-		dirty:      make(map[string]bool),
-		processing: make(map[string]bool),
-		retries:    make(map[string]int),
-		baseDelay:  defaultRetryBaseDelay,
-		maxDelay:   defaultRetryMaxDelay,
+		dirty:         make(map[string]bool),
+		processing:    make(map[string]bool),
+		retries:       make(map[string]int),
+		waitingForAdd: make(map[string]bool),
+		baseDelay:     defaultRetryBaseDelay,
+		maxDelay:      defaultRetryMaxDelay,
+		stopCh:        make(chan struct{}),
 	}
 	q.cond = sync.NewCond(&q.mu)
 	for _, option := range options {
@@ -111,6 +123,8 @@ func (q *workQueue) Add(key string) {
 	q.add(key)
 }
 
+// add marks a key dirty and enqueues it unless it is already queued or being
+// processed; Done re-enqueues keys re-added while processing. Callers hold q.mu.
 func (q *workQueue) add(key string) {
 	if q.shutDown {
 		return
@@ -120,27 +134,42 @@ func (q *workQueue) add(key string) {
 	}
 	q.dirty[key] = true
 	if q.processing[key] {
-		// Re-added while processing; Done re-enqueues it.
 		return
 	}
 	q.ready = append(q.ready, key)
 	q.cond.Signal()
 }
 
+func (q *workQueue) AddAfter(key string, delay time.Duration) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if q.shutDown {
+		return
+	}
+	q.addAfter(key, delay)
+}
+
 func (q *workQueue) AddRateLimited(key string) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	if q.shutDown || q.dirty[key] || q.processing[key] {
+	if q.shutDown {
 		return
 	}
 	q.retries[key]++
-	delay := q.backoffDelay(key)
-	q.dirty[key] = true
+	q.addAfter(key, q.backoffDelay(key))
+}
+
+// addAfter schedules a delayed add. Callers hold q.mu.
+func (q *workQueue) addAfter(key string, delay time.Duration) {
 	if delay <= 0 {
-		q.ready = append(q.ready, key)
-	} else {
-		heap.Push(&q.delayed, delayedItem{key: key, readyAt: time.Now().Add(delay)})
+		q.add(key)
+		return
 	}
+	if q.waitingForAdd[key] {
+		return
+	}
+	q.waitingForAdd[key] = true
+	heap.Push(&q.delayed, delayedItem{key: key, readyAt: time.Now().Add(delay)})
 	q.cond.Broadcast()
 }
 
@@ -162,22 +191,23 @@ func (q *workQueue) Get() (key string, shutdown bool) {
 		}
 		if len(q.delayed) > 0 && !q.delayed[0].readyAt.After(time.Now()) {
 			item := heap.Pop(&q.delayed).(delayedItem)
-			delete(q.dirty, item.key)
-			q.processing[item.key] = true
-			return item.key, false
+			delete(q.waitingForAdd, item.key)
+			q.add(item.key)
+			continue
 		}
 		if q.shutDown {
 			return "", true
 		}
 		if len(q.delayed) > 0 {
-			wait := time.Until(q.delayed[0].readyAt)
-			if wait > 0 {
-				timer := time.NewTimer(wait)
-				q.mu.Unlock()
-				<-timer.C
-				q.mu.Lock()
-				continue
+			timer := time.NewTimer(time.Until(q.delayed[0].readyAt))
+			q.mu.Unlock()
+			select {
+			case <-timer.C:
+			case <-q.stopCh:
+				timer.Stop()
 			}
+			q.mu.Lock()
+			continue
 		}
 		q.cond.Wait()
 	}
@@ -204,12 +234,14 @@ func (q *workQueue) Len() int {
 
 func (q *workQueue) ShutDown() {
 	q.mu.Lock()
-	defer q.mu.Unlock()
 	if q.shutDown {
+		q.mu.Unlock()
 		return
 	}
 	q.shutDown = true
+	close(q.stopCh)
 	q.cond.Broadcast()
+	q.mu.Unlock()
 }
 
 func (q *workQueue) ShuttingDown() bool {
@@ -219,7 +251,8 @@ func (q *workQueue) ShuttingDown() bool {
 }
 
 // backoffDelay computes the retry delay for a key: exponential backoff based on
-// the requeue count, bounded by the global rate limiter when configured.
+// the requeue count with additive jitter (uniform in [base, 2*base), clamped to
+// the cap), bounded by the global rate limiter when configured.
 func (q *workQueue) backoffDelay(key string) time.Duration {
 	backoff := q.baseDelay
 	for i := 1; i < q.retries[key]; i++ {
@@ -227,6 +260,12 @@ func (q *workQueue) backoffDelay(key string) time.Duration {
 		if backoff >= q.maxDelay {
 			backoff = q.maxDelay
 			break
+		}
+	}
+	if backoff < q.maxDelay {
+		backoff += time.Duration(rand.Int64N(int64(backoff)))
+		if backoff > q.maxDelay {
+			backoff = q.maxDelay
 		}
 	}
 	if q.limiter != nil {

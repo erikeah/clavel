@@ -16,7 +16,9 @@ func (self *EvaluationStatus) Set(status *core.EvaluationStatus) {
 		return
 	}
 	self.Phase = EvaluationStatusPhase(status.Phase)
-	self.StorePath = status.StorePath
+	self.Result = status.Result
+	self.ObservedGeneration = status.ObservedGeneration
+	self.Message = status.Message
 }
 
 func (self *Evaluation) Set(p *core.Evaluation) {

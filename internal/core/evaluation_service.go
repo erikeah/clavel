@@ -66,7 +66,7 @@ func (s *EvaluationService) Update(ctx context.Context, name string, data *Evalu
 	if hasChanged, err := s.merge(target, data); err != nil {
 		return errors.Join(exceptions.InternalFailure, err)
 	} else if !hasChanged {
-		return exceptions.NotModified
+		return nil
 	}
 	if err := s.validate(*target); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)

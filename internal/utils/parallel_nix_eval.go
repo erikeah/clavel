@@ -52,6 +52,7 @@ func ParallelNixEval(ctx context.Context, references []string) <-chan *nixEvalua
 			var value any
 			if err := eval(ctx, &value, ref); err != nil {
 				results <- &nixEvaluationResult{Value: nil, Err: err}
+				return
 			}
 			results <- &nixEvaluationResult{Value: value}
 		}(reference)

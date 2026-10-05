@@ -163,9 +163,14 @@ func (x *EvaluationSpecification) GetReference() string {
 }
 
 type EvaluationStatus struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Phase         EvaluationStatusPhase  `protobuf:"varint,1,opt,name=phase,proto3,enum=clavel.core.v1.EvaluationStatusPhase" json:"phase,omitempty"`
-	StorePath     string                 `protobuf:"bytes,2,opt,name=store_path,json=storePath,proto3" json:"store_path,omitempty"`
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Phase              EvaluationStatusPhase  `protobuf:"varint,1,opt,name=phase,proto3,enum=clavel.core.v1.EvaluationStatusPhase" json:"phase,omitempty"`
+	ObservedGeneration int64                  `protobuf:"varint,3,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
+	Message            string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	// base64-encoded JSON-encoded evaluation result; empty when the result
+	// cannot be represented as JSON (see message), in which case phase is
+	// SUCCEEDED.
+	Result        string `protobuf:"bytes,5,opt,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -207,9 +212,23 @@ func (x *EvaluationStatus) GetPhase() EvaluationStatusPhase {
 	return EvaluationStatusPhase_EVALUATION_STATUS_PHASE_UNSPECIFIED
 }
 
-func (x *EvaluationStatus) GetStorePath() string {
+func (x *EvaluationStatus) GetObservedGeneration() int64 {
 	if x != nil {
-		return x.StorePath
+		return x.ObservedGeneration
+	}
+	return 0
+}
+
+func (x *EvaluationStatus) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *EvaluationStatus) GetResult() string {
+	if x != nil {
+		return x.Result
 	}
 	return ""
 }
@@ -810,11 +829,13 @@ const file_clavel_core_v1_evaluation_proto_rawDesc = "" +
 	"\x05Error\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"7\n" +
 	"\x17EvaluationSpecification\x12\x1c\n" +
-	"\treference\x18\x01 \x01(\tR\treference\"n\n" +
+	"\treference\x18\x01 \x01(\tR\treference\"\xc4\x01\n" +
 	"\x10EvaluationStatus\x12;\n" +
-	"\x05phase\x18\x01 \x01(\x0e2%.clavel.core.v1.EvaluationStatusPhaseR\x05phase\x12\x1d\n" +
-	"\n" +
-	"store_path\x18\x02 \x01(\tR\tstorePath\"\xcd\x01\n" +
+	"\x05phase\x18\x01 \x01(\x0e2%.clavel.core.v1.EvaluationStatusPhaseR\x05phase\x12/\n" +
+	"\x13observed_generation\x18\x03 \x01(\x03R\x12observedGeneration\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12\x16\n" +
+	"\x06result\x18\x05 \x01(\tR\x06resultJ\x04\b\x02\x10\x03R\n" +
+	"store_path\"\xcd\x01\n" +
 	"\n" +
 	"Evaluation\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +

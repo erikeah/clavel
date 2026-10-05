@@ -50,6 +50,46 @@ func TestWorkQueueRateLimited(t *testing.T) {
 	queue.Done(key)
 }
 
+func TestWorkQueueRateLimitedRequeuedWhileProcessing(t *testing.T) {
+	queue := NewWorkQueue(WithRetryBaseDelay(40*time.Millisecond), WithRetryMaxDelay(80*time.Millisecond))
+	queue.Add("a")
+	key, shutdown := queue.Get()
+	if shutdown || key != "a" {
+		t.Fatalf("expected key a, got %q shutdown=%v", key, shutdown)
+	}
+	// A failed reconcile requeues the key while it is still processing; the
+	// retry must be delivered after the backoff, not dropped.
+	queue.AddRateLimited("a")
+	queue.Done("a")
+	start := time.Now()
+	next, shutdown := queue.Get()
+	if shutdown || next != "a" {
+		t.Fatalf("expected delayed requeue of a, got %q shutdown=%v", next, shutdown)
+	}
+	if elapsed := time.Since(start); elapsed < 30*time.Millisecond {
+		t.Fatalf("rate limited key delivered too early: %s", elapsed)
+	}
+	queue.Done("a")
+}
+
+func TestWorkQueueAddAfterDedup(t *testing.T) {
+	queue := NewWorkQueue()
+	queue.AddAfter("a", time.Hour)
+	queue.AddAfter("a", time.Hour)
+	if queue.Len() != 1 {
+		t.Fatalf("Len = %d, want 1 (second AddAfter for the same key is dropped)", queue.Len())
+	}
+	queue.AddAfter("b", 0)
+	if queue.Len() != 2 {
+		t.Fatalf("Len = %d, want 2 (immediate AddAfter lands in the ready queue)", queue.Len())
+	}
+	key, shutdown := queue.Get()
+	if shutdown || key != "b" {
+		t.Fatalf("expected key b, got %q shutdown=%v", key, shutdown)
+	}
+	queue.Done("b")
+}
+
 func TestWorkQueueReaddWhileProcessing(t *testing.T) {
 	queue := NewWorkQueue()
 	queue.Add("a")

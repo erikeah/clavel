@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/base64"
 	"errors"
 	"regexp"
 
@@ -21,8 +22,18 @@ const (
 )
 
 type EvaluationStatus struct {
-	Phase     EvaluationPhase `json:"phase"`
-	StorePath string          `json:"store_path"`
+	Phase EvaluationPhase `json:"phase"`
+	// Result holds the raw JSON evaluation result base64-encoded, so the
+	// stored and transmitted representation needs no escaping.
+	Result             string `json:"result,omitempty"`
+	ObservedGeneration int64  `json:"observedGeneration"`
+	Message            string `json:"message,omitempty"`
+}
+
+// EncodeResult base64-encodes a raw JSON evaluation result for storage and
+// transmission.
+func EncodeResult(raw []byte) string {
+	return base64.StdEncoding.EncodeToString(raw)
 }
 
 func ValidateReference(flakeRef string) error {
@@ -191,10 +202,9 @@ func MergeEvaluationStatus(over *EvaluationStatus, from EvaluationStatus) (bool,
 	if from == (EvaluationStatus{}) {
 		return false, nil
 	}
-	if over.Phase == from.Phase && over.StorePath == from.StorePath {
+	if *over == from {
 		return false, nil
 	}
-	over.Phase = from.Phase
-	over.StorePath = from.StorePath
+	*over = from
 	return true, nil
 }

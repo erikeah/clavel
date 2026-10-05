@@ -23,8 +23,15 @@ enum EvaluationStatusPhase {
 }
 
 message EvaluationStatus {
+  reserved 2;
+  reserved "store_path";
   EvaluationStatusPhase phase = 1;
-  string store_path = 2;
+  int64 observed_generation = 3;
+  string message = 4;
+  // base64-encoded JSON-encoded evaluation result; empty when the result
+  // cannot be represented as JSON (see message), in which case phase is
+  // SUCCEEDED.
+  string result = 5;
 }
 
 message Evaluation {

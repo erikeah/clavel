@@ -26,8 +26,10 @@ func (self *EvaluationStatus) Convert() core.EvaluationStatus {
 		return core.EvaluationStatus{}
 	}
 	return core.EvaluationStatus{
-		Phase:     self.Phase.Convert(),
-		StorePath: self.StorePath,
+		Phase:              self.Phase.Convert(),
+		Result:             self.Result,
+		ObservedGeneration: self.ObservedGeneration,
+		Message:            self.Message,
 	}
 }
 
