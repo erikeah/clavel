@@ -28,9 +28,8 @@ message EvaluationStatus {
   EvaluationStatusPhase phase = 1;
   int64 observed_generation = 3;
   string message = 4;
-  // base64-encoded JSON-encoded evaluation result; empty when the result
-  // cannot be represented as JSON (see message), in which case phase is
-  // SUCCEEDED.
+  // Base64-encoded JSON evaluation result. Empty when the evaluation failed
+  // (see message); non-empty when phase is SUCCEEDED.
   string result = 5;
 }
 

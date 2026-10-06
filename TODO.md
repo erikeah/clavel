@@ -31,7 +31,8 @@ Allow to choose which attr are saved to status.result, this will make evaluation
 ## Result size cap
 
 `status.result` holds the full JSON evaluation result inline in the etcd object, which is
-subject to etcd's default ~1.5 MiB request limit. A large result makes `Update` fail, and the
+subject to etcd's default ~1.5 MiB request limit. The result is base64-encoded, inflating the
+stored payload by roughly 33% over the raw JSON, so a large result makes `Update` fail and the
 controller retries forever.
 
 Enhancement (deferred): cap `result` (e.g. 1 MiB) with a `message` noting truncation, or move

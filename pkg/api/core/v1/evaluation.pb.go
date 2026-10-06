@@ -167,9 +167,8 @@ type EvaluationStatus struct {
 	Phase              EvaluationStatusPhase  `protobuf:"varint,1,opt,name=phase,proto3,enum=clavel.core.v1.EvaluationStatusPhase" json:"phase,omitempty"`
 	ObservedGeneration int64                  `protobuf:"varint,3,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
 	Message            string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
-	// base64-encoded JSON-encoded evaluation result; empty when the result
-	// cannot be represented as JSON (see message), in which case phase is
-	// SUCCEEDED.
+	// Base64-encoded JSON evaluation result. Empty when the evaluation failed
+	// (see message); non-empty when phase is SUCCEEDED.
 	Result        string `protobuf:"bytes,5,opt,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

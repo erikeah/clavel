@@ -13,9 +13,15 @@ The system is designed to be **declarative, reproducible**, and **extensible** t
 name: <name>
 metadata: { creationTimestamp, generation, resourceVersion, finalizers }
 spec: { reference: "<source>#<evaluation-target>" }
+status: { phase, result, observedGeneration, message }
 ```
 
-Evaluations are stored via `clavelapi` (etcd-backed) and watched by `clavelcontroller`, which dispatches rules against them. The reference is handed to `nix eval <reference> --eval-cache --json` at evaluation time.
+Evaluations are stored via `clavelapi` (etcd-backed) and watched by `clavelcontroller`, which reconciles them. The controller hands `spec.reference` to `nix eval <reference> --eval-cache --json` and writes the outcome back to `status`:
+
+- `phase` — `SUCCEEDED`, `FAILED`, or `PENDING` (`UNSPECIFIED` before the first reconciliation).
+- `result` — the raw JSON returned by `nix eval`, base64-encoded so it can be stored and transmitted without escaping. Empty when the evaluation failed.
+- `observedGeneration` — the `metadata.generation` this status reflects; changing the spec bumps the generation and re-triggers evaluation.
+- `message` — human-readable detail, e.g. the evaluation error when `phase` is `FAILED`.
 
 ---
 
