@@ -234,10 +234,11 @@ func (x *EvaluationStatus) GetResult() string {
 
 type Evaluation struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
-	Name          string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Metadata      *Metadata                `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Status        *EvaluationStatus        `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Spec          *EvaluationSpecification `protobuf:"bytes,4,opt,name=spec,proto3" json:"spec,omitempty"`
+	Metadata      *Metadata                `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	Status        *EvaluationStatus        `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	Spec          *EvaluationSpecification `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`
+	ApiVersion    string                   `protobuf:"bytes,4,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	Kind          string                   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -272,13 +273,6 @@ func (*Evaluation) Descriptor() ([]byte, []int) {
 	return file_clavel_core_v1_evaluation_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *Evaluation) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 func (x *Evaluation) GetMetadata() *Metadata {
 	if x != nil {
 		return x.Metadata
@@ -298,6 +292,20 @@ func (x *Evaluation) GetSpec() *EvaluationSpecification {
 		return x.Spec
 	}
 	return nil
+}
+
+func (x *Evaluation) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *Evaluation) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
 }
 
 type EvaluationServiceShowRequest struct {
@@ -834,13 +842,15 @@ const file_clavel_core_v1_evaluation_proto_rawDesc = "" +
 	"\x13observed_generation\x18\x03 \x01(\x03R\x12observedGeneration\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12\x16\n" +
 	"\x06result\x18\x05 \x01(\tR\x06resultJ\x04\b\x02\x10\x03R\n" +
-	"store_path\"\xcd\x01\n" +
+	"store_path\"\xee\x01\n" +
 	"\n" +
-	"Evaluation\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x124\n" +
-	"\bmetadata\x18\x02 \x01(\v2\x18.clavel.core.v1.MetadataR\bmetadata\x128\n" +
-	"\x06status\x18\x03 \x01(\v2 .clavel.core.v1.EvaluationStatusR\x06status\x12;\n" +
-	"\x04spec\x18\x04 \x01(\v2'.clavel.core.v1.EvaluationSpecificationR\x04spec\"2\n" +
+	"Evaluation\x124\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x18.clavel.core.v1.MetadataR\bmetadata\x128\n" +
+	"\x06status\x18\x02 \x01(\v2 .clavel.core.v1.EvaluationStatusR\x06status\x12;\n" +
+	"\x04spec\x18\x03 \x01(\v2'.clavel.core.v1.EvaluationSpecificationR\x04spec\x12\x1f\n" +
+	"\vapi_version\x18\x04 \x01(\tR\n" +
+	"apiVersion\x12\x12\n" +
+	"\x04kind\x18\x05 \x01(\tR\x04kind\"2\n" +
 	"\x1cEvaluationServiceShowRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"O\n" +
 	"\x1dEvaluationServiceShowResponse\x12.\n" +

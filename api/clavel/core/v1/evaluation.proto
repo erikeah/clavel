@@ -34,10 +34,11 @@ message EvaluationStatus {
 }
 
 message Evaluation {
-  string name = 1;
-  Metadata metadata = 2;
-  EvaluationStatus status = 3;
-  EvaluationSpecification spec = 4;
+  Metadata metadata = 1;
+  EvaluationStatus status = 2;
+  EvaluationSpecification spec = 3;
+  string api_version = 4;
+  string kind = 5;
 }
 
 message EvaluationServiceShowRequest {

@@ -4,10 +4,30 @@ package clavel.core.v1;
 
 option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";
 
+// OwnerReference points at another resource this resource depends on or is
+// owned by; the owner set drives pruning and teardown ordering.
+message OwnerReference {
+  string api_version = 1;
+  string kind = 2;
+  string name = 3;
+  string uid = 4;
+  bool controller = 5;
+  bool block_owner_deletion = 6;
+}
+
 message Metadata {
-  int64 generation = 1;
-  string resource_version = 5;
-  string creation_timestamp = 2;
-  string deletion_timestamp = 3;
-  repeated string finalizers = 4;
+  // Name is the immutable identity and idempotence key of the resource.
+  string name = 1;
+  // Uid is assigned by the server on creation and never changes.
+  string uid = 2;
+  string namespace = 3;
+  string generate_name = 4;
+  map<string, string> labels = 5;
+  map<string, string> annotations = 6;
+  repeated OwnerReference owner_references = 7;
+  repeated string finalizers = 8;
+  int64 generation = 9;
+  string resource_version = 10;
+  string creation_timestamp = 11;
+  string deletion_timestamp = 12;
 }

@@ -26,7 +26,7 @@ func newFakeClient(evaluations ...*core.Evaluation) *fakeClient {
 	for _, evaluation := range evaluations {
 		proto := &corev1.Evaluation{}
 		proto.Set(evaluation)
-		client.objects[evaluation.Name] = proto
+		client.objects[evaluation.Metadata.Name] = proto
 	}
 	return client
 }
@@ -55,7 +55,7 @@ func (f *fakeClient) Update(
 func newTestInformer(evaluations ...*core.Evaluation) *controller.Informer[*core.Evaluation] {
 	queue := controller.NewWorkQueue()
 	informer := controller.NewInformer[*core.Evaluation](queue, func(evaluation *core.Evaluation) string {
-		return evaluation.Name
+		return evaluation.Metadata.Name
 	})
 	for _, evaluation := range evaluations {
 		informer.Add(evaluation)
@@ -65,9 +65,8 @@ func newTestInformer(evaluations ...*core.Evaluation) *controller.Informer[*core
 
 func TestReconcileSuccess(t *testing.T) {
 	evaluation := &core.Evaluation{
-		Name:     "server",
 		Spec:     core.EvaluationSpecification{Reference: "github:erikeah/clavel?dir=example#server"},
-		Metadata: core.Metadata{Generation: 3},
+		Metadata: core.Metadata{Name: "server", Generation: 3},
 	}
 	rawResult := `{"storePath":"/nix/store/abc123-nixos-system-server"}`
 	client := newFakeClient(evaluation)
@@ -79,11 +78,11 @@ func TestReconcileSuccess(t *testing.T) {
 		return rawResult, nil
 	})
 
-	if err := reconcile(context.Background(), evaluation.Name); err != nil {
+	if err := reconcile(context.Background(), evaluation.Metadata.Name); err != nil {
 		t.Fatalf("reconcile() error = %v", err)
 	}
 
-	status := client.objects[evaluation.Name].GetStatus()
+	status := client.objects[evaluation.Metadata.Name].GetStatus()
 	if status.GetPhase() != corev1.EvaluationStatusPhase_EVALUATION_STATUS_PHASE_SUCCEEDED {
 		t.Fatalf("phase = %v, want SUCCEEDED", status.GetPhase())
 	}
@@ -104,9 +103,9 @@ func TestReconcileSuccess(t *testing.T) {
 
 func TestReconcileSkipsAlreadySucceededGeneration(t *testing.T) {
 	evaluation := &core.Evaluation{
-		Name: "server",
 		Spec: core.EvaluationSpecification{Reference: "ref#server"},
 		Metadata: core.Metadata{
+			Name:       "server",
 			Generation: 4,
 		},
 		Status: core.EvaluationStatus{
@@ -123,7 +122,7 @@ func TestReconcileSkipsAlreadySucceededGeneration(t *testing.T) {
 		return "/nix/store/new", nil
 	})
 
-	if err := reconcile(context.Background(), evaluation.Name); err != nil {
+	if err := reconcile(context.Background(), evaluation.Metadata.Name); err != nil {
 		t.Fatalf("reconcile() error = %v", err)
 	}
 	if evaluated {
@@ -137,9 +136,8 @@ func TestReconcileSkipsAlreadySucceededGeneration(t *testing.T) {
 func TestReconcileRetriesOnSpecChange(t *testing.T) {
 	rawResult := `{"storePath":"/nix/store/re-evaluated"}`
 	evaluation := &core.Evaluation{
-		Name:     "server",
 		Spec:     core.EvaluationSpecification{Reference: "ref#server-v2"},
-		Metadata: core.Metadata{Generation: 5},
+		Metadata: core.Metadata{Name: "server", Generation: 5},
 		Status: core.EvaluationStatus{
 			Phase:              core.EvaluationPhaseSucceeded,
 			Result:             core.EncodeResult([]byte(`"/nix/store/old"`)),
@@ -152,10 +150,10 @@ func TestReconcileRetriesOnSpecChange(t *testing.T) {
 		return rawResult, nil
 	})
 
-	if err := reconcile(context.Background(), evaluation.Name); err != nil {
+	if err := reconcile(context.Background(), evaluation.Metadata.Name); err != nil {
 		t.Fatalf("reconcile() error = %v", err)
 	}
-	status := client.objects[evaluation.Name].GetStatus()
+	status := client.objects[evaluation.Metadata.Name].GetStatus()
 	if status.GetObservedGeneration() != 5 {
 		t.Fatalf("observed_generation = %d, want 5", status.GetObservedGeneration())
 	}
@@ -166,9 +164,8 @@ func TestReconcileRetriesOnSpecChange(t *testing.T) {
 
 func TestReconcileFailure(t *testing.T) {
 	evaluation := &core.Evaluation{
-		Name:     "server",
 		Spec:     core.EvaluationSpecification{Reference: "ref#broken"},
-		Metadata: core.Metadata{Generation: 7},
+		Metadata: core.Metadata{Name: "server", Generation: 7},
 	}
 	client := newFakeClient(evaluation)
 	informer := newTestInformer(evaluation)
@@ -177,7 +174,7 @@ func TestReconcileFailure(t *testing.T) {
 		return "", evalErr
 	})
 
-	err := reconcile(context.Background(), evaluation.Name)
+	err := reconcile(context.Background(), evaluation.Metadata.Name)
 	if err == nil {
 		t.Fatal("reconcile() error = nil, want evaluation error")
 	}
@@ -185,7 +182,7 @@ func TestReconcileFailure(t *testing.T) {
 		t.Fatalf("error = %v, want wrapped evaluation error", err)
 	}
 
-	status := client.objects[evaluation.Name].GetStatus()
+	status := client.objects[evaluation.Metadata.Name].GetStatus()
 	if status.GetPhase() != corev1.EvaluationStatusPhase_EVALUATION_STATUS_PHASE_FAILED {
 		t.Fatalf("phase = %v, want FAILED", status.GetPhase())
 	}
@@ -199,9 +196,8 @@ func TestReconcileFailure(t *testing.T) {
 
 func TestReconcileRepeatedFailuresWriteStatusAtMostTwicePerGeneration(t *testing.T) {
 	evaluation := &core.Evaluation{
-		Name:     "server",
 		Spec:     core.EvaluationSpecification{Reference: "ref#broken"},
-		Metadata: core.Metadata{Generation: 7},
+		Metadata: core.Metadata{Name: "server", Generation: 7},
 	}
 	client := newFakeClient(evaluation)
 	informer := newTestInformer(evaluation)
@@ -210,11 +206,11 @@ func TestReconcileRepeatedFailuresWriteStatusAtMostTwicePerGeneration(t *testing
 	})
 
 	for attempt := 1; attempt <= 5; attempt++ {
-		if err := reconcile(context.Background(), evaluation.Name); err == nil {
+		if err := reconcile(context.Background(), evaluation.Metadata.Name); err == nil {
 			t.Fatalf("reconcile() error = nil on attempt %d, want failure", attempt)
 		}
 		// Simulate the watch event echoing the status write back into the cache.
-		informer.Add(client.objects[evaluation.Name].Convert(nil))
+		informer.Add(client.objects[evaluation.Metadata.Name].Convert(nil))
 	}
 	if client.updates != 2 {
 		t.Fatalf("updates = %d, want at most 2 per generation (pending + failed)", client.updates)
@@ -236,8 +232,8 @@ func TestReconcileMissingKeyReturnsNil(t *testing.T) {
 func TestReconcileDeletionTimestampSkips(t *testing.T) {
 	now := time.Now()
 	evaluation := &core.Evaluation{
-		Name: "server",
 		Metadata: core.Metadata{
+			Name:              "server",
 			Generation:        1,
 			DeletionTimestamp: &now,
 		},
@@ -248,7 +244,7 @@ func TestReconcileDeletionTimestampSkips(t *testing.T) {
 		t.Fatal("evaluation ran for a resource being deleted")
 		return "", nil
 	})
-	if err := reconcile(context.Background(), evaluation.Name); err != nil {
+	if err := reconcile(context.Background(), evaluation.Metadata.Name); err != nil {
 		t.Fatalf("reconcile() error = %v, want nil", err)
 	}
 }

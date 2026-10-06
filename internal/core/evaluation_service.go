@@ -27,7 +27,7 @@ func (s *EvaluationService) Create(ctx context.Context, data *Evaluation) error 
 	if err := s.validate(*resource); err != nil {
 		return errors.Join(exceptions.InvalidArguments, err)
 	}
-	if err := s.store.Create(ctx, resource.Name, resource); err != nil {
+	if err := s.store.Create(ctx, resource.Metadata.Name, resource); err != nil {
 		return err
 	}
 	return nil

@@ -38,7 +38,8 @@ func (self *Evaluation) Convert(fmc *fieldmaskcommander.FieldMaskCommander) *cor
 		return nil
 	}
 	conversion := &core.Evaluation{}
-	conversion.Name = self.Name
+	conversion.APIVersion = self.GetApiVersion()
+	conversion.Kind = self.GetKind()
 	metadataFmc := fmc.GoTo("metadata")
 	conversion.Metadata = self.Metadata.Convert(metadataFmc)
 	conversion.Spec = self.Spec.Convert()

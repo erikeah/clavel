@@ -172,7 +172,7 @@ func Run(ctx context.Context) {
 	client := corev1connect.NewEvaluationServiceClient(http.DefaultClient, apiAddress())
 	queue := controller.NewWorkQueue(controller.WithRateLimiter(rate.NewLimiter(rate.Limit(1), 1)))
 	informer := controller.NewInformer[*core.Evaluation](queue, func(evaluation *core.Evaluation) string {
-		return evaluation.Name
+		return evaluation.Metadata.Name
 	})
 	go startInformer(ctx, client, informer)
 	reconcile := newReconcile(client, informer, nix.Eval)

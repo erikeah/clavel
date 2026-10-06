@@ -10,11 +10,16 @@ The system is designed to be **declarative, reproducible**, and **extensible** t
 `Evaluation` is the core entity. It pairs a flake `reference` string of the form `<source>#<evaluation-target>` — a source and a target encoded in one flake reference — with core metadata like generation, resource version, and finalizers.
 
 ```
-name: <name>
-metadata: { creationTimestamp, generation, resourceVersion, finalizers }
+apiVersion: clavel.core/v1
+kind: Evaluation
+metadata: { name, uid, generation, resourceVersion, creationTimestamp, deletionTimestamp,
+            finalizers, labels, annotations, ownerReferences, generateName, namespace }
 spec: { reference: "<source>#<evaluation-target>" }
 status: { phase, result, observedGeneration, message }
 ```
+
+`metadata.name` is the immutable identity of the resource and `metadata.uid` is
+assigned by the server on creation.
 
 Evaluations are stored via `clavelapi` (etcd-backed) and watched by `clavelcontroller`, which reconciles them. The controller hands `spec.reference` to `nix eval <reference> --eval-cache --json` and writes the outcome back to `status`:
 

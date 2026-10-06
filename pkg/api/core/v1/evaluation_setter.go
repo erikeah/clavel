@@ -25,7 +25,8 @@ func (self *Evaluation) Set(p *core.Evaluation) {
 	if p == nil {
 		return
 	}
-	self.Name = p.Name
+	self.ApiVersion = p.APIVersion
+	self.Kind = p.Kind
 	if self.Spec == nil {
 		self.Spec = &EvaluationSpecification{}
 	}

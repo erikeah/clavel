@@ -21,20 +21,115 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// OwnerReference points at another resource this resource depends on or is
+// owned by; the owner set drives pruning and teardown ordering.
+type OwnerReference struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	ApiVersion         string                 `protobuf:"bytes,1,opt,name=api_version,json=apiVersion,proto3" json:"api_version,omitempty"`
+	Kind               string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	Name               string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Uid                string                 `protobuf:"bytes,4,opt,name=uid,proto3" json:"uid,omitempty"`
+	Controller         bool                   `protobuf:"varint,5,opt,name=controller,proto3" json:"controller,omitempty"`
+	BlockOwnerDeletion bool                   `protobuf:"varint,6,opt,name=block_owner_deletion,json=blockOwnerDeletion,proto3" json:"block_owner_deletion,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *OwnerReference) Reset() {
+	*x = OwnerReference{}
+	mi := &file_clavel_core_v1_metadata_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OwnerReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OwnerReference) ProtoMessage() {}
+
+func (x *OwnerReference) ProtoReflect() protoreflect.Message {
+	mi := &file_clavel_core_v1_metadata_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OwnerReference.ProtoReflect.Descriptor instead.
+func (*OwnerReference) Descriptor() ([]byte, []int) {
+	return file_clavel_core_v1_metadata_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *OwnerReference) GetApiVersion() string {
+	if x != nil {
+		return x.ApiVersion
+	}
+	return ""
+}
+
+func (x *OwnerReference) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *OwnerReference) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *OwnerReference) GetUid() string {
+	if x != nil {
+		return x.Uid
+	}
+	return ""
+}
+
+func (x *OwnerReference) GetController() bool {
+	if x != nil {
+		return x.Controller
+	}
+	return false
+}
+
+func (x *OwnerReference) GetBlockOwnerDeletion() bool {
+	if x != nil {
+		return x.BlockOwnerDeletion
+	}
+	return false
+}
+
 type Metadata struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Generation        int64                  `protobuf:"varint,1,opt,name=generation,proto3" json:"generation,omitempty"`
-	ResourceVersion   string                 `protobuf:"bytes,5,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
-	CreationTimestamp string                 `protobuf:"bytes,2,opt,name=creation_timestamp,json=creationTimestamp,proto3" json:"creation_timestamp,omitempty"`
-	DeletionTimestamp string                 `protobuf:"bytes,3,opt,name=deletion_timestamp,json=deletionTimestamp,proto3" json:"deletion_timestamp,omitempty"`
-	Finalizers        []string               `protobuf:"bytes,4,rep,name=finalizers,proto3" json:"finalizers,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Name is the immutable identity and idempotence key of the resource.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Uid is assigned by the server on creation and never changes.
+	Uid               string            `protobuf:"bytes,2,opt,name=uid,proto3" json:"uid,omitempty"`
+	Namespace         string            `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	GenerateName      string            `protobuf:"bytes,4,opt,name=generate_name,json=generateName,proto3" json:"generate_name,omitempty"`
+	Labels            map[string]string `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Annotations       map[string]string `protobuf:"bytes,6,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	OwnerReferences   []*OwnerReference `protobuf:"bytes,7,rep,name=owner_references,json=ownerReferences,proto3" json:"owner_references,omitempty"`
+	Finalizers        []string          `protobuf:"bytes,8,rep,name=finalizers,proto3" json:"finalizers,omitempty"`
+	Generation        int64             `protobuf:"varint,9,opt,name=generation,proto3" json:"generation,omitempty"`
+	ResourceVersion   string            `protobuf:"bytes,10,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
+	CreationTimestamp string            `protobuf:"bytes,11,opt,name=creation_timestamp,json=creationTimestamp,proto3" json:"creation_timestamp,omitempty"`
+	DeletionTimestamp string            `protobuf:"bytes,12,opt,name=deletion_timestamp,json=deletionTimestamp,proto3" json:"deletion_timestamp,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Metadata) Reset() {
 	*x = Metadata{}
-	mi := &file_clavel_core_v1_metadata_proto_msgTypes[0]
+	mi := &file_clavel_core_v1_metadata_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +141,7 @@ func (x *Metadata) String() string {
 func (*Metadata) ProtoMessage() {}
 
 func (x *Metadata) ProtoReflect() protoreflect.Message {
-	mi := &file_clavel_core_v1_metadata_proto_msgTypes[0]
+	mi := &file_clavel_core_v1_metadata_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +154,63 @@ func (x *Metadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Metadata.ProtoReflect.Descriptor instead.
 func (*Metadata) Descriptor() ([]byte, []int) {
-	return file_clavel_core_v1_metadata_proto_rawDescGZIP(), []int{0}
+	return file_clavel_core_v1_metadata_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Metadata) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Metadata) GetUid() string {
+	if x != nil {
+		return x.Uid
+	}
+	return ""
+}
+
+func (x *Metadata) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *Metadata) GetGenerateName() string {
+	if x != nil {
+		return x.GenerateName
+	}
+	return ""
+}
+
+func (x *Metadata) GetLabels() map[string]string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *Metadata) GetAnnotations() map[string]string {
+	if x != nil {
+		return x.Annotations
+	}
+	return nil
+}
+
+func (x *Metadata) GetOwnerReferences() []*OwnerReference {
+	if x != nil {
+		return x.OwnerReferences
+	}
+	return nil
+}
+
+func (x *Metadata) GetFinalizers() []string {
+	if x != nil {
+		return x.Finalizers
+	}
+	return nil
 }
 
 func (x *Metadata) GetGeneration() int64 {
@@ -90,28 +241,45 @@ func (x *Metadata) GetDeletionTimestamp() string {
 	return ""
 }
 
-func (x *Metadata) GetFinalizers() []string {
-	if x != nil {
-		return x.Finalizers
-	}
-	return nil
-}
-
 var File_clavel_core_v1_metadata_proto protoreflect.FileDescriptor
 
 const file_clavel_core_v1_metadata_proto_rawDesc = "" +
 	"\n" +
-	"\x1dclavel/core/v1/metadata.proto\x12\x0eclavel.core.v1\"\xd3\x01\n" +
-	"\bMetadata\x12\x1e\n" +
+	"\x1dclavel/core/v1/metadata.proto\x12\x0eclavel.core.v1\"\xbd\x01\n" +
+	"\x0eOwnerReference\x12\x1f\n" +
+	"\vapi_version\x18\x01 \x01(\tR\n" +
+	"apiVersion\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x10\n" +
+	"\x03uid\x18\x04 \x01(\tR\x03uid\x12\x1e\n" +
 	"\n" +
-	"generation\x18\x01 \x01(\x03R\n" +
+	"controller\x18\x05 \x01(\bR\n" +
+	"controller\x120\n" +
+	"\x14block_owner_deletion\x18\x06 \x01(\bR\x12blockOwnerDeletion\"\x8d\x05\n" +
+	"\bMetadata\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
+	"\x03uid\x18\x02 \x01(\tR\x03uid\x12\x1c\n" +
+	"\tnamespace\x18\x03 \x01(\tR\tnamespace\x12#\n" +
+	"\rgenerate_name\x18\x04 \x01(\tR\fgenerateName\x12<\n" +
+	"\x06labels\x18\x05 \x03(\v2$.clavel.core.v1.Metadata.LabelsEntryR\x06labels\x12K\n" +
+	"\vannotations\x18\x06 \x03(\v2).clavel.core.v1.Metadata.AnnotationsEntryR\vannotations\x12I\n" +
+	"\x10owner_references\x18\a \x03(\v2\x1e.clavel.core.v1.OwnerReferenceR\x0fownerReferences\x12\x1e\n" +
+	"\n" +
+	"finalizers\x18\b \x03(\tR\n" +
+	"finalizers\x12\x1e\n" +
+	"\n" +
+	"generation\x18\t \x01(\x03R\n" +
 	"generation\x12)\n" +
-	"\x10resource_version\x18\x05 \x01(\tR\x0fresourceVersion\x12-\n" +
-	"\x12creation_timestamp\x18\x02 \x01(\tR\x11creationTimestamp\x12-\n" +
-	"\x12deletion_timestamp\x18\x03 \x01(\tR\x11deletionTimestamp\x12\x1e\n" +
-	"\n" +
-	"finalizers\x18\x04 \x03(\tR\n" +
-	"finalizersB2Z0github.com/erikeah/clavel/pkg/api/core/v1;corev1b\x06proto3"
+	"\x10resource_version\x18\n" +
+	" \x01(\tR\x0fresourceVersion\x12-\n" +
+	"\x12creation_timestamp\x18\v \x01(\tR\x11creationTimestamp\x12-\n" +
+	"\x12deletion_timestamp\x18\f \x01(\tR\x11deletionTimestamp\x1a9\n" +
+	"\vLabelsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x10AnnotationsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B2Z0github.com/erikeah/clavel/pkg/api/core/v1;corev1b\x06proto3"
 
 var (
 	file_clavel_core_v1_metadata_proto_rawDescOnce sync.Once
@@ -125,16 +293,22 @@ func file_clavel_core_v1_metadata_proto_rawDescGZIP() []byte {
 	return file_clavel_core_v1_metadata_proto_rawDescData
 }
 
-var file_clavel_core_v1_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_clavel_core_v1_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_clavel_core_v1_metadata_proto_goTypes = []any{
-	(*Metadata)(nil), // 0: clavel.core.v1.Metadata
+	(*OwnerReference)(nil), // 0: clavel.core.v1.OwnerReference
+	(*Metadata)(nil),       // 1: clavel.core.v1.Metadata
+	nil,                    // 2: clavel.core.v1.Metadata.LabelsEntry
+	nil,                    // 3: clavel.core.v1.Metadata.AnnotationsEntry
 }
 var file_clavel_core_v1_metadata_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: clavel.core.v1.Metadata.labels:type_name -> clavel.core.v1.Metadata.LabelsEntry
+	3, // 1: clavel.core.v1.Metadata.annotations:type_name -> clavel.core.v1.Metadata.AnnotationsEntry
+	0, // 2: clavel.core.v1.Metadata.owner_references:type_name -> clavel.core.v1.OwnerReference
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_clavel_core_v1_metadata_proto_init() }
@@ -148,7 +322,7 @@ func file_clavel_core_v1_metadata_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_clavel_core_v1_metadata_proto_rawDesc), len(file_clavel_core_v1_metadata_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

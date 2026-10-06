@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/erikeah/clavel/internal/exceptions"
@@ -79,11 +80,18 @@ func MergeEvaluationSpecification(over, from *EvaluationSpecification) (bool, er
 	return hasChanged, nil
 }
 
+// TypeMeta of an Evaluation as stored; the versioned schema of every resource.
+const (
+	EvaluationAPIVersion = "clavel.core/v1"
+	EvaluationKind       = "Evaluation"
+)
+
 type Evaluation struct {
-	Name     string                  `json:"name"`
-	Metadata Metadata                `json:"metadata"`
-	Status   EvaluationStatus        `json:"status"`
-	Spec     EvaluationSpecification `json:"spec"`
+	APIVersion string                  `json:"apiVersion"`
+	Kind       string                  `json:"kind"`
+	Metadata   Metadata                `json:"metadata"`
+	Status     EvaluationStatus        `json:"status"`
+	Spec       EvaluationSpecification `json:"spec"`
 }
 
 func (p *Evaluation) GetMetadataResourceVersion() string {
@@ -107,17 +115,6 @@ func (p *Evaluation) SetMetadataResourceVersion(rv string) {
 	p.Metadata.SetResourceVersion(rv)
 }
 
-func ValidateName(name string) error {
-	var nameErrors error
-	if len(name) == 0 {
-		nameErrors = errors.Join(nameErrors, errors.New("Name cannot be empty"))
-	}
-	if regexp.MustCompile(`[ \t/]`).MatchString(name) {
-		nameErrors = errors.Join(nameErrors, errors.New("Name cannot contain slashes, spaces or tabs"))
-	}
-	return nameErrors
-}
-
 func ValidateEvaluationStatus(status EvaluationStatus) error {
 	var statusErrors error
 	switch status.Phase {
@@ -128,15 +125,26 @@ func ValidateEvaluationStatus(status EvaluationStatus) error {
 	return statusErrors
 }
 
+func ValidateTypeMeta(apiVersion string, kind string) error {
+	var typeMetaErrors error
+	if apiVersion != EvaluationAPIVersion {
+		typeMetaErrors = errors.Join(typeMetaErrors, fmt.Errorf("APIVersion must be %q", EvaluationAPIVersion))
+	}
+	if kind != EvaluationKind {
+		typeMetaErrors = errors.Join(typeMetaErrors, fmt.Errorf("Kind must be %q", EvaluationKind))
+	}
+	return typeMetaErrors
+}
+
 func ValidateEvaluation(evaluation Evaluation) error {
 	var evaluationErrors error
-	if err := ValidateName(evaluation.Name); err != nil {
-		evaluationErrors = errors.Join(evaluationErrors, err)
-	}
-	if err := ValidateEvaluationSpecification(evaluation.Spec); err != nil {
+	if err := ValidateTypeMeta(evaluation.APIVersion, evaluation.Kind); err != nil {
 		evaluationErrors = errors.Join(evaluationErrors, err)
 	}
 	if err := ValidateMetadata(&evaluation.Metadata); err != nil {
+		evaluationErrors = errors.Join(evaluationErrors, err)
+	}
+	if err := ValidateEvaluationSpecification(evaluation.Spec); err != nil {
 		evaluationErrors = errors.Join(evaluationErrors, err)
 	}
 	if err := ValidateEvaluationStatus(evaluation.Status); err != nil {
@@ -149,6 +157,12 @@ func SetDefaults_Evaluation(p *Evaluation) error {
 	if p == nil {
 		// TODO: Logging or sensible error
 		return exceptions.InternalFailure
+	}
+	if p.APIVersion == "" {
+		p.APIVersion = EvaluationAPIVersion
+	}
+	if p.Kind == "" {
+		p.Kind = EvaluationKind
 	}
 	if err := SetDefaults_Metadata(&p.Metadata); err != nil {
 		return err
@@ -168,11 +182,14 @@ func MergeEvaluation(over, from *Evaluation) (bool, error) {
 	if from == nil {
 		return hasChanged, nil
 	}
-	if from.Name != "" {
-		if from.Name != over.Name && over.Name != "" {
-			return hasChanged, errors.Join(exceptions.InvalidArguments, errors.New("Name cannot be changed"))
-		}
-		over.Name = from.Name
+	// TypeMeta is part of the requested identity; it is validated, never
+	// silently rewritten.
+	if from.APIVersion != "" && from.APIVersion != over.APIVersion {
+		over.APIVersion = from.APIVersion
+		hasChanged = true
+	}
+	if from.Kind != "" && from.Kind != over.Kind {
+		over.Kind = from.Kind
 		hasChanged = true
 	}
 	if specHasChanged, err := MergeEvaluationSpecification(&over.Spec, &from.Spec); err != nil {
