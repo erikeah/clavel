@@ -5,8 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
+	artifactController "github.com/erikeah/clavel/internal/controller/artifact"
 	evaluationController "github.com/erikeah/clavel/internal/controller/evaluation"
 )
 
@@ -15,6 +17,9 @@ func main() {
 	defer stop()
 
 	slog.Info("clavelcontroller starting")
-	evaluationController.Run(ctx)
+	var controllers sync.WaitGroup
+	controllers.Go(func() { evaluationController.Run(ctx) })
+	controllers.Go(func() { artifactController.Run(ctx) })
+	controllers.Wait()
 	slog.Info("clavelcontroller stopped")
 }

@@ -17,9 +17,10 @@ deletion as the Nix module is the source of truth. The individual gaps live in
   always "resource X needs the result of evaluation Y", never "X needs Y's Nix
   expression".
 - **Data flows through etcd, never through re-evaluation.** A store path is computed
-  once by the controller and then `nix copy`'d. This is what makes "no build at
-  deploy time" real, and it removes the need for the hard two-phase-eval problem of
-  feeding results back into Nix.
+  once by the evaluation controller and then *referenced*: an `Artifact` points at the
+  path instead of taking a copy of it, so clavel never builds, fetches or deletes store
+  content. That is what makes "no build at deploy time" real, and it removes the need
+  for the hard two-phase-eval problem of feeding results back into Nix.
 - **The definition eval and the per-unit eval are the same primitive** (`nix eval
   --eval-cache --json`) with different references. There is one evaluation mechanism,
   not two eval paths.
@@ -74,11 +75,12 @@ outcome to `status`.
 
 ### Artifact
 
-Lets a consumer pull an already-evaluated store path without building anything:
+Names an already-evaluated store path: the Nix analogue of a container `image`, a
+reference a consumer resolves rather than content clavel owns.
 
 ```proto
 message ArtifactSpecification {
-  string store = 1;            // https://cache.nixos.org
+  string store = 1;            // store the path is looked up in; empty = local store
   ArtifactStorePath store_path = 2;
 }
 message ArtifactStorePath {
@@ -86,9 +88,13 @@ message ArtifactStorePath {
 }
 ```
 
-Reconcile: wait until `eval_ref` is `SUCCEEDED`, read its `status.result`, then
-`nix copy --from {store} {result}`. Finalizer: remove the copied path from the local
-cache on deletion.
+Reconcile: wait until `eval_ref` is `SUCCEEDED`, read its `status.result`, then confirm
+the path with `nix path-info --json --json-format 2 --store {store} {path}` and record
+it in `status.storePath`. nix exits 0 for a path the store does not have and reports it
+as null, so presence is read from the reply rather than from the exit status; an absent
+path is `FAILED` without a retry, because only a change to the artifact or to the
+evaluation can make it different. The artifact owns nothing outside etcd, so deletion
+registers no finalizer — dropping the definition is the whole of it.
 
 ### ClavelConfiguration (the root)
 
@@ -125,10 +131,10 @@ manifest = list of typed resources
    ▼
 clavelapi (etcd)  ──watch──►  controllers
    │                              ├─ evaluation:       nix eval spec.reference  → status.result
-   │                              ├─ artifact:         wait eval_ref SUCCEEDED  → nix copy
+   │                              ├─ artifact:         wait eval_ref SUCCEEDED  → nix path-info
    │                              └─ clavelConfiguration: wait eval_ref SUCCEEDED → apply result
    ▼
-ownerReferences + finalizers → prune, teardown order, cache cleanup
+ownerReferences + finalizers → prune, teardown order
 ```
 
 - `clavelctl` is a thin client over the same Connect/gRPC API integrations use —
@@ -154,8 +160,11 @@ The manifest encodes the DAG for free: `artifact.spec.storePath.evalRef` and
   graph cannot).
 - **Runtime propagation** — readiness-gating, not scheduling. A consumer's reconcile
   checks its `eval_ref` is `SUCCEEDED` before acting; otherwise it stays `PENDING` and
-  is re-enqueued when the upstream status changes. The reverse index comes from
-  `ownerReferences` (and a `dependsOn` label when ownership is not the relationship).
+  is re-enqueued when the upstream status changes. The reverse index is
+  `DependencyTracker` (`internal/controller/dependency.go`): the consumer's informer
+  records each `evalRef` as an edge as it caches the resource, and a second watch turns
+  an evaluation event straight into the keys recorded against it. No consumer ever
+  polls its dependency.
 - **Failure semantics** — a failed dependency blocks its dependents with a message in
   `status.message`; dependents are not retried independently of their upstream.
 - **Teardown** — reverse topological order, driven by the same edges.
@@ -226,7 +235,7 @@ The "no build at deploy time" rule doubles as the security boundary:
 | Rename = delete+create | k8s semantics: immutable `name`, `uid` for runtime identity |
 | Dependency invisibility | manifest carries the edges (`evalRef`); readiness-gating resolves runtime deps |
 | Cycles | rejected at apply time |
-| No ordering / reverse index | topo-sort for creation; `ownerReferences` reverse index for propagation |
+| No ordering / reverse index | topo-sort for creation; `DependencyTracker` reverse index for propagation |
 | Never-ending retries | dependents blocked with a `status.message`, not independently retried |
 | Deletion not observed | delete events + informer eviction + finalizer clearing |
 | Destructive prune | `ownerReferences` scoping: only resources this root created are prunable; `--dry-run` first |
@@ -247,7 +256,9 @@ The "no build at deploy time" rule doubles as the security boundary:
 3. **CAS update** — `genericstore.Update` as a `ModRevision` transaction. *(done)*
 4. **Readiness-gating + reverse index** — consumers wait on `eval_ref`; dependents
    re-enqueue on upstream status change; `status.message` carries blocked reasons.
-5. **Artifact kind** — proto + converter/setter + reconcile running `nix copy`.
+   *(done)*
+5. **Artifact kind** — proto + converter/setter + reconcile confirming the resolved
+   path with `nix path-info`. *(done)*
 6. **ClavelConfiguration root + clavelctl apply** — proto, manifest evaluation,
    diff/apply via the API, `ownerReferences`, prune, `--dry-run`.
 7. **Sandboxing** — eval flags (`--restrict-eval`, `--no-allow-import-from-derivation`)

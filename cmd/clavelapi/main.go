@@ -27,8 +27,12 @@ func main() {
 	evaluationStore := core.NewEvaluationStore(cli)
 	evaluationService := core.NewEvaluationService(evaluationStore)
 	evaluationPath, evaluationHandler := transport.NewEvaluationServiceHandler(evaluationService)
+	artifactStore := core.NewArtifactStore(cli)
+	artifactService := core.NewArtifactService(artifactStore)
+	artifactPath, artifactHandler := transport.NewArtifactServiceHandler(artifactService)
 	mux := http.NewServeMux()
 	mux.Handle(evaluationPath, evaluationHandler)
+	mux.Handle(artifactPath, artifactHandler)
 	host := ""
 	port := options.ServerPort
 	addr := fmt.Sprintf("%s:%d", host, port)

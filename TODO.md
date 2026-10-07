@@ -20,8 +20,9 @@ Enhancement (deferred):
 
 - the evaluation controller does not *register* `controllerFinalizer`, so no `Evaluation`
   carries one and the clear step only runs when another actor registered it; register it as
-  soon as there is cleanup to perform on deletion (the `nix copy` cache removal of an
-  Artifact, the owned resources of a `ClavelConfiguration`).
+  soon as there is cleanup to perform on deletion (the owned resources of a
+  `ClavelConfiguration`). An `Artifact` deliberately registers none: it points at a store
+  path clavel does not own, so dropping the definition is the whole of deletion.
 
 ## Evaluation attrs filter
 
@@ -62,13 +63,17 @@ result against stored resources, then issue Create/Update/Delete. Gaps:
   after reconcile, so Nix cannot see it during the definition eval
 - lazy Nix evaluation tolerates cycles, an apply graph cannot: needs cycle detection plus
   topological order on apply and reverse order on teardown
-- reconcile has no ordering (`internal/controller/evaluation/controller.go`): it short-circuits on
-  `Succeeded && observedGeneration == generation` and never checks upstream readiness
-- no reverse-dependency index: `Informer.Add` enqueues only the changed key, and nothing maps
-  an upstream status change to the resources that depend on it — `Metadata.ownerReferences`
-  (`api/clavel/core/v1/metadata.proto`) are stored but never read back
-- failure semantics undefined: a failed dependency should block its dependents instead of
-  retrying them forever through the workqueue
+- runtime readiness-gating exists for the first consumer
+  (`internal/controller/artifact/controller.go`): it waits on `eval_ref`, writes `PENDING`
+  with a `status.message`, and is woken by the reverse index rather than polling; the
+  evaluation controller still has no upstream to wait on
+- a reverse-dependency index now exists (`internal/controller/dependency.go`) but only
+  `evalRef` edges are recorded into it — `Metadata.ownerReferences`
+  (`api/clavel/core/v1/metadata.proto`) are stored and never read back, so
+  ownership-driven teardown still has no index
+- failure semantics are defined for a blocked dependency (`PENDING` + message, no
+  independent retry) but not for a failed one: whether a `FAILED` evaluation unblocks its
+  dependents as `FAILED` or keeps them `PENDING` is undecided
 
 ## Nix as source of truth / pruning
 

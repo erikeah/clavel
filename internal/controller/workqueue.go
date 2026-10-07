@@ -91,6 +91,10 @@ type workQueue struct {
 	// most one entry in delayed.
 	waitingForAdd map[string]bool
 	delayed       delayedHeap
+	// wakeLoop tells waitingLoop to recompute its deadline whenever the delayed
+	// heap head may have moved. Buffered, so a signal never blocks the sender
+	// and one pending signal is enough to catch a head change.
+	wakeLoop chan struct{}
 
 	limiter   *rate.Limiter
 	baseDelay time.Duration
@@ -108,12 +112,14 @@ func NewWorkQueue(options ...WorkQueueOption) WorkQueue {
 		waitingForAdd: make(map[string]bool),
 		baseDelay:     defaultRetryBaseDelay,
 		maxDelay:      defaultRetryMaxDelay,
+		wakeLoop:      make(chan struct{}, 1),
 		stopCh:        make(chan struct{}),
 	}
 	q.cond = sync.NewCond(&q.mu)
 	for _, option := range options {
 		option(q)
 	}
+	go q.waitingLoop()
 	return q
 }
 
@@ -170,7 +176,12 @@ func (q *workQueue) addAfter(key string, delay time.Duration) {
 	}
 	q.waitingForAdd[key] = true
 	heap.Push(&q.delayed, delayedItem{key: key, readyAt: time.Now().Add(delay)})
-	q.cond.Broadcast()
+	// The heap head may have moved in either direction, so waitingLoop has to
+	// wake up and recompute how long it must sleep.
+	select {
+	case q.wakeLoop <- struct{}{}:
+	default:
+	}
 }
 
 func (q *workQueue) Forget(key string) {
@@ -189,27 +200,70 @@ func (q *workQueue) Get() (key string, shutdown bool) {
 			q.processing[key] = true
 			return key, false
 		}
-		if len(q.delayed) > 0 && !q.delayed[0].readyAt.After(time.Now()) {
-			item := heap.Pop(&q.delayed).(delayedItem)
-			delete(q.waitingForAdd, item.key)
-			q.add(item.key)
-			continue
-		}
 		if q.shutDown {
 			return "", true
 		}
-		if len(q.delayed) > 0 {
-			timer := time.NewTimer(time.Until(q.delayed[0].readyAt))
+		// Waiting on the condition variable rather than on a timer of our own
+		// is what makes Add wake us: a signal delivered while this goroutine
+		// slept on a timer would be lost, and a ready key would then wait out
+		// an unrelated key's backoff. waitingLoop promotes due delayed items
+		// and broadcasts, so every path back to a ready key reaches us.
+		q.cond.Wait()
+	}
+}
+
+// waitingLoop promotes delayed items once their delay elapses. It owns that
+// promotion so Get can wait purely on the condition variable, and it is the
+// only thing that can wake itself early: a new delayed item may be due sooner
+// than the one currently heading the heap.
+func (q *workQueue) waitingLoop() {
+	for {
+		q.mu.Lock()
+		if q.shutDown {
 			q.mu.Unlock()
-			select {
-			case <-timer.C:
-			case <-q.stopCh:
-				timer.Stop()
-			}
-			q.mu.Lock()
+			return
+		}
+		if len(q.delayed) > 0 && !q.delayed[0].readyAt.After(time.Now()) {
+			q.promoteDue()
+			q.cond.Broadcast()
+			q.mu.Unlock()
 			continue
 		}
-		q.cond.Wait()
+		var deadline time.Time
+		if len(q.delayed) > 0 {
+			deadline = q.delayed[0].readyAt
+		}
+		q.mu.Unlock()
+
+		var timeout <-chan time.Time
+		var timer *time.Timer
+		if !deadline.IsZero() {
+			timer = time.NewTimer(time.Until(deadline))
+			timeout = timer.C
+		}
+		select {
+		case <-q.stopCh:
+			if timer != nil {
+				timer.Stop()
+			}
+			return
+		case <-q.wakeLoop:
+			if timer != nil {
+				timer.Stop()
+			}
+		case <-timeout:
+		}
+	}
+}
+
+// promoteDue moves every delayed item whose delay elapsed into the ready queue.
+// Callers hold q.mu.
+func (q *workQueue) promoteDue() {
+	now := time.Now()
+	for len(q.delayed) > 0 && !q.delayed[0].readyAt.After(now) {
+		item := heap.Pop(&q.delayed).(delayedItem)
+		delete(q.waitingForAdd, item.key)
+		q.add(item.key)
 	}
 }
 

@@ -106,6 +106,45 @@ func TestWorkQueueReaddWhileProcessing(t *testing.T) {
 	queue.Done("a")
 }
 
+func TestWorkQueueAddWakesGetBlockedOnDelayedItem(t *testing.T) {
+	queue := NewWorkQueue()
+	// A pending delayed item must not keep a worker asleep when a key becomes
+	// ready: the Add signal used to be delivered to a goroutine sleeping on a
+	// timer, where nothing was listening for it.
+	queue.AddAfter("far", time.Hour)
+
+	got := make(chan string, 1)
+	go func() {
+		key, _ := queue.Get()
+		got <- key
+	}()
+	time.Sleep(50 * time.Millisecond)
+	queue.Add("ready")
+
+	select {
+	case key := <-got:
+		if key != "ready" {
+			t.Fatalf("Get() = %q, want ready", key)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Get() did not return a ready key while a delayed item was pending")
+	}
+	queue.Done("ready")
+	queue.ShutDown()
+}
+
+func TestWorkQueuePromotesDelayedItemWithoutPollingGet(t *testing.T) {
+	queue := NewWorkQueue(WithRetryBaseDelay(5*time.Millisecond), WithRetryMaxDelay(20*time.Millisecond))
+	queue.AddAfter("later", 5*time.Millisecond)
+
+	key, shutdown := queue.Get()
+	if shutdown || key != "later" {
+		t.Fatalf("Get() = %q shutdown=%v, want later", key, shutdown)
+	}
+	queue.Done("later")
+	queue.ShutDown()
+}
+
 func TestWorkQueueShutdown(t *testing.T) {
 	queue := NewWorkQueue()
 	queue.Add("a")

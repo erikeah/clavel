@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package clavel.core.v1;
+
+import "clavel/core/v1/event.proto";
+// Error, the stream-level failure carried by every Watch RPC, is declared next
+// to EvaluationService; it is imported here to be reused rather than duplicated
+// under the same package name.
+import "clavel/core/v1/evaluation.proto";
+import "clavel/core/v1/metadata.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";
+
+// ArtifactStorePath names the Evaluation whose result names the store path
+// this artifact points at. The dependency is the evalRef: a consumer needs the
+// result of an Evaluation, never that Evaluation's expression.
+message ArtifactStorePath {
+  // Name of the Evaluation owning the store path.
+  string eval_ref = 1;
+}
+
+message ArtifactSpecification {
+  // Store the path is looked up in, e.g. https://cache.nixos.org. Empty means
+  // the local store.
+  string store = 1;
+  ArtifactStorePath store_path = 2;
+}
+
+enum ArtifactStatusPhase {
+  ARTIFACT_STATUS_PHASE_UNSPECIFIED = 0;
+  ARTIFACT_STATUS_PHASE_PENDING = 1;
+  ARTIFACT_STATUS_PHASE_SUCCEEDED = 2;
+  ARTIFACT_STATUS_PHASE_FAILED = 3;
+}
+
+message ArtifactStatus {
+  ArtifactStatusPhase phase = 1;
+  // Store path the evalRef resolved to. Recorded while the path is confirmed
+  // present so a consumer reads the resolved reference directly, even after
+  // the spec has changed.
+  string store_path = 2;
+  int64 observed_generation = 3;
+  string message = 4;
+}
+
+message Artifact {
+  Metadata metadata = 1;
+  ArtifactStatus status = 2;
+  ArtifactSpecification spec = 3;
+  string api_version = 4;
+  string kind = 5;
+}
+
+message ArtifactServiceShowRequest {
+  string name = 1;
+}
+
+message ArtifactServiceShowResponse {
+  Artifact data = 1;
+}
+
+message ArtifactServiceCreateRequest {
+  Artifact data = 1;
+}
+
+message ArtifactServiceCreateResponse {}
+
+message ArtifactServiceListRequest {}
+
+message ArtifactServiceListResponse {
+  repeated Artifact data = 1;
+}
+
+message ArtifactServiceDeleteRequest {
+  string name = 1;
+}
+
+message ArtifactServiceDeleteResponse {}
+
+message ArtifactServiceUpdateRequest {
+  string name = 1;
+  Artifact data = 2;
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message ArtifactServiceUpdateResponse {}
+
+message ArtifactServiceWatchRequest {
+  // Ask the server to stream the current state first, terminated by an
+  // EVENT_TYPE_SYNC marker, before forwarding changes.
+  bool list = 1;
+}
+
+message ArtifactServiceWatchResponse {
+  Artifact data = 1;
+  Error error = 2;
+  // What happened. EVENT_TYPE_PUT carries data; EVENT_TYPE_DELETE carries only
+  // name; EVENT_TYPE_SYNC carries neither.
+  EventType type = 3;
+  // Identity of the resource the event refers to, set on every event.
+  string name = 4;
+}
+
+service ArtifactService {
+  rpc Show(ArtifactServiceShowRequest) returns (ArtifactServiceShowResponse) {}
+  rpc List(ArtifactServiceListRequest) returns (ArtifactServiceListResponse) {}
+  rpc Create(ArtifactServiceCreateRequest) returns (ArtifactServiceCreateResponse) {}
+  rpc Update(ArtifactServiceUpdateRequest) returns (ArtifactServiceUpdateResponse) {}
+  rpc Delete(ArtifactServiceDeleteRequest) returns (ArtifactServiceDeleteResponse) {}
+  rpc Watch(ArtifactServiceWatchRequest) returns (stream ArtifactServiceWatchResponse) {}
+}
