@@ -85,9 +85,22 @@ result against stored resources, then issue Create/Update/Delete. Gaps:
 
 ## Concurrent updates
 
-`genericstore.Update` performs a blind `Put` while `MergeMetadata` compares `resourceVersion` in
-Go, leaving a TOCTOU window between `FindOne` and `Put`. Needs an etcd transaction comparing
-`ModRevision` (compare-and-swap), as `Create` already does.
+`genericstore.Update` is an etcd transaction comparing `ModRevision` against the
+`resourceVersion` the caller read, so a stale write returns `Conflict` instead of clobbering
+a concurrent one; `MergeMetadata` reports the same condition up front. The `resourceVersion`
+is required (Kubernetes semantics), and `Conflict` maps to `CodeFailedPrecondition`, which
+reconcile retries. The TOCTOU window between `FindOne` and `Put` is closed.
+
+## Controller HA
+
+Writes are safe with several controllers running, but reconciliation is only *safe*, not
+*cheap*: every replica sees every watch event and runs `nix eval` on it, so N replicas do N
+evaluations per change and the conflict merely de-duplicates the write.
+
+Deferred: leader election — a lease that lets one replica reconcile while the others stand
+by, wrapping `Run` in `internal/controller/evaluation/controller.go` without changing
+reconcile semantics. Sharding keys across replicas can wait until a single leader's
+throughput is a bottleneck.
 
 ## Evaluation sandboxing
 

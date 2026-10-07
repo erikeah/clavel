@@ -89,8 +89,8 @@ func TestMergeMetadataResourceVersionMismatch(t *testing.T) {
 	if err == nil {
 		t.Fatal("MergeMetadata() error = nil, want resourceVersion conflict")
 	}
-	if !errors.Is(err, exceptions.InvalidArguments) {
-		t.Fatalf("MergeMetadata() error = %v, want InvalidArguments", err)
+	if !errors.Is(err, exceptions.Conflict) {
+		t.Fatalf("MergeMetadata() error = %v, want Conflict", err)
 	}
 }
 

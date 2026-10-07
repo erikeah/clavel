@@ -2,16 +2,20 @@ package genericstore
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/erikeah/clavel/internal/exceptions"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type testResource struct {
 	Name            string `json:"name"`
+	Value           string `json:"value,omitempty"`
 	ResourceVersion string `json:"-"`
 }
 
@@ -141,5 +145,114 @@ func TestWatchWithoutSnapshotHasNoSync(t *testing.T) {
 	removed := nextEvent(t, events, errs)
 	if removed.Type != EventTypeDelete || removed.Name != "seed" {
 		t.Fatalf("event = %+v, want a delete of seed", removed)
+	}
+}
+
+func TestUpdateRejectsStaleResourceVersion(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	if err := st.Create(ctx, "conflict", &testResource{Name: "conflict", Value: "initial"}); err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	read, err := st.FindOne(ctx, "conflict")
+	if err != nil {
+		t.Fatalf("FindOne() error = %v", err)
+	}
+
+	winner := &testResource{Name: "conflict", Value: "winner", ResourceVersion: read.ResourceVersion}
+	if err := st.Update(ctx, "conflict", winner); err != nil {
+		t.Fatalf("first Update() error = %v", err)
+	}
+	if winner.ResourceVersion == read.ResourceVersion {
+		t.Fatalf("resourceVersion = %s, want it bumped on write", winner.ResourceVersion)
+	}
+
+	// A writer that still holds the revision read above must be rejected, and
+	// must not overwrite what the winner stored.
+	stale := &testResource{Name: "conflict", Value: "stale", ResourceVersion: read.ResourceVersion}
+	if err := st.Update(ctx, "conflict", stale); !errors.Is(err, exceptions.Conflict) {
+		t.Fatalf("stale Update() error = %v, want Conflict", err)
+	}
+	stored, err := st.FindOne(ctx, "conflict")
+	if err != nil {
+		t.Fatalf("FindOne() error = %v", err)
+	}
+	if stored.Value != "winner" {
+		t.Fatalf("value = %q, want %q: the stale write must have been rejected", stored.Value, "winner")
+	}
+
+	// Retrying with the revision the winner stamped onto the object succeeds.
+	if err := st.Update(ctx, "conflict", &testResource{
+		Name:            "conflict",
+		Value:           "retried",
+		ResourceVersion: winner.ResourceVersion,
+	}); err != nil {
+		t.Fatalf("retry Update() error = %v", err)
+	}
+}
+
+func TestConcurrentUpdatesHaveExactlyOneWinner(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	if err := st.Create(ctx, "race", &testResource{Name: "race"}); err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	base, err := st.FindOne(ctx, "race")
+	if err != nil {
+		t.Fatalf("FindOne() error = %v", err)
+	}
+
+	const writers = 4
+	results := make([]error, writers)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < writers; i++ {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			attempt := &testResource{Name: "race", ResourceVersion: base.ResourceVersion}
+			<-start
+			results[index] = st.Update(ctx, "race", attempt)
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	var winners, conflicts int
+	for _, err := range results {
+		switch {
+		case err == nil:
+			winners++
+		case errors.Is(err, exceptions.Conflict):
+			conflicts++
+		default:
+			t.Fatalf("Update() error = %v, want nil or Conflict", err)
+		}
+	}
+	if winners != 1 {
+		t.Fatalf("successful writes = %d, want exactly 1", winners)
+	}
+	if conflicts != writers-1 {
+		t.Fatalf("conflicts = %d, want %d", conflicts, writers-1)
+	}
+}
+
+func TestUpdateOfAbsentResourceReportsNotFound(t *testing.T) {
+	st := newTestStore(t)
+	err := st.Update(context.Background(), "absent", &testResource{Name: "absent", ResourceVersion: "1"})
+	if !errors.Is(err, exceptions.DoesNotExist) {
+		t.Fatalf("Update() error = %v, want DoesNotExist", err)
+	}
+}
+
+func TestUpdateWithoutReadIsRejected(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	if err := st.Create(ctx, "unread", &testResource{Name: "unread"}); err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	err := st.Update(ctx, "unread", &testResource{Name: "unread"})
+	if !errors.Is(err, exceptions.Conflict) {
+		t.Fatalf("Update() error = %v, want Conflict for a write without a read", err)
 	}
 }

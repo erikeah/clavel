@@ -153,9 +153,11 @@ func MergeMetadata(over, from *Metadata) (bool, error) {
 	if from == nil {
 		return hasChanged, exceptions.InvalidArguments
 	}
-	// HINT: Perform optimist concurrency validation
+	// Optimistic concurrency: the caller must send the revision it read, so a
+	// write based on a stale read fails here and again, atomically, in the
+	// store. A conflict is retryable, not a bad request.
 	if over.ResourceVersion != from.ResourceVersion {
-		return hasChanged, errors.Join(exceptions.InvalidArguments, errors.New("resourceVersion does not match"))
+		return hasChanged, errors.Join(exceptions.Conflict, errors.New("resourceVersion does not match"))
 	}
 	// Name is the identity: settable only while unset, never renamed.
 	if from.Name != "" {

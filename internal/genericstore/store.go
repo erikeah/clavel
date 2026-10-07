@@ -127,6 +127,12 @@ func (s *store[M]) Delete(ctx context.Context, name string) error {
 	return nil
 }
 
+// Update persists data only if the resource still carries the revision the
+// caller read: the compare-and-swap rejects a stale write instead of letting
+// it clobber a concurrent one. The expected revision is the resource's own
+// resourceVersion, which equals the key's ModRevision, so an update that skips
+// the read (empty) only ever matches an absent key. On success the stored
+// revision is stamped back onto data.
 func (s *store[M]) Update(ctx context.Context, key string, data M) error {
 	kv := s.client.KV
 	jsonData, err := json.Marshal(data)
@@ -134,11 +140,28 @@ func (s *store[M]) Update(ctx context.Context, key string, data M) error {
 		return errors.Join(exceptions.Unknown, err)
 	}
 	destination := s.genPath(key)
-	_, err = kv.Put(ctx, destination, string(jsonData))
+	expected, err := strconv.ParseInt(data.GetMetadataResourceVersion(), 10, 64)
+	if err != nil {
+		return errors.Join(exceptions.Conflict, err)
+	}
+	resp, err := kv.Txn(ctx).
+		If(clientv3.Compare(clientv3.ModRevision(destination), "=", expected)).
+		Then(clientv3.OpPut(destination, string(jsonData))).
+		Else(clientv3.OpGet(destination)).
+		Commit()
 	if err != nil {
 		return errors.Join(exceptions.Unknown, err)
 	}
-	return nil
+	if resp.Succeeded {
+		data.SetMetadataResourceVersion(strconv.FormatInt(resp.Header.Revision, 10))
+		return nil
+	}
+	// The precondition failed: either the resource is gone, so the caller's
+	// read is stale, or someone wrote it first.
+	if len(resp.Responses) < 1 || len(resp.Responses[0].GetResponseRange().GetKvs()) < 1 {
+		return exceptions.DoesNotExist
+	}
+	return errors.Join(exceptions.Conflict, errors.New("resourceVersion does not match"))
 }
 
 // Watch streams the state of the store. It always starts at the revision it

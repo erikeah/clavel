@@ -10,10 +10,11 @@ import (
 )
 
 type fakeStore struct {
-	created map[string]*Evaluation
-	updated map[string]*Evaluation
-	deleted []string
-	stored  *Evaluation
+	created   map[string]*Evaluation
+	updated   map[string]*Evaluation
+	deleted   []string
+	stored    *Evaluation
+	updateErr error
 }
 
 func newFakeStore() *fakeStore {
@@ -46,6 +47,9 @@ func (s *fakeStore) FindOne(context.Context, string) (*Evaluation, error) {
 func (s *fakeStore) List(context.Context) ([]*Evaluation, error) { return nil, nil }
 
 func (s *fakeStore) Update(_ context.Context, key string, data *Evaluation) error {
+	if s.updateErr != nil {
+		return s.updateErr
+	}
 	s.updated[key] = data
 	return nil
 }
@@ -269,5 +273,46 @@ func TestUpdateKeepsDeletingToReconcile(t *testing.T) {
 	}
 	if len(store.updated) != 1 {
 		t.Fatalf("store updates = %d, want 1", len(store.updated))
+	}
+}
+
+// A write based on a read that no longer matches the stored revision is a
+// conflict: the caller has to re-read, not overwrite.
+func TestUpdateRejectsStaleResourceVersion(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation(nil, false)
+	service := newService(store)
+
+	stale := newStoredEvaluation(nil, false)
+	stale.Metadata.ResourceVersion = "16"
+	stale.Status = EvaluationStatus{Phase: EvaluationPhasePending, ObservedGeneration: 1}
+
+	err := service.Update(context.Background(), "server", stale)
+	if err == nil {
+		t.Fatal("Update() error = nil, want Conflict for a stale resourceVersion")
+	}
+	if !errors.Is(err, exceptions.Conflict) {
+		t.Fatalf("Update() error = %v, want Conflict", err)
+	}
+	if len(store.updated) != 0 {
+		t.Fatalf("store updates = %d, want 0: a conflict must not reach the store", len(store.updated))
+	}
+}
+
+func TestUpdatePropagatesStoreConflict(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation(nil, false)
+	store.updateErr = exceptions.Conflict
+	service := newService(store)
+
+	update := newStoredEvaluation(nil, false)
+	update.Status = EvaluationStatus{Phase: EvaluationPhasePending, ObservedGeneration: 1}
+
+	err := service.Update(context.Background(), "server", update)
+	if !errors.Is(err, exceptions.Conflict) {
+		t.Fatalf("Update() error = %v, want Conflict", err)
+	}
+	if len(store.updated) != 0 {
+		t.Fatalf("store updates = %d, want 0", len(store.updated))
 	}
 }

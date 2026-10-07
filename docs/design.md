@@ -186,10 +186,21 @@ prune = { r : r is owned by <root>, r.name ∉ manifest }
 
 ## Concurrency
 
-`genericstore.Update` performs a blind `Put` while `MergeMetadata` compares
-`resourceVersion` in Go, leaving a TOCTOU window between `FindOne` and `Put`. The
-fix mirrors what `Create` already does: an etcd transaction comparing `ModRevision`
-(compare-and-swap) so a concurrent writer fails the txn instead of clobbering.
+Updates are optimistic-concurrency with Kubernetes semantics: a caller must send the
+`resourceVersion` it read, and the store enforces the compare atomically rather than in Go.
+
+- `MergeMetadata` rejects a stale `resourceVersion` up front with `Conflict`, so the caller
+  re-reads instead of being handed a bad request.
+- `genericstore.Update` is an etcd transaction comparing `ModRevision` against that
+  revision — the same shape `Create` already used to guard against double-creation. A failed
+  precondition returns `DoesNotExist` if the resource is gone and `Conflict` otherwise, and a
+  successful write stamps the new revision back onto the object.
+- `Conflict` maps to `CodeFailedPrecondition`, which reconcile treats as a retryable error:
+  the loser re-reads, sees the object already converged, and stops.
+
+What this buys and what it does not: two controllers racing on the same resource can never
+lose a write, but both still *run* the evaluation before finding out who won. Avoiding the
+duplicate work needs leader election, which is deferred (`TODO.md`, `Controller HA`).
 
 ## Sandbox and reproducibility
 
@@ -233,7 +244,7 @@ The "no build at deploy time" rule doubles as the security boundary:
    typed watch events (put/delete/sync) on `EvaluationServiceWatchResponse`, informer
    eviction and snapshot replace, finalizer clearing plus delete in reconcile.
    *(done, registering the finalizer still pending)*
-3. **CAS update** — `genericstore.Update` as a `ModRevision` transaction.
+3. **CAS update** — `genericstore.Update` as a `ModRevision` transaction. *(done)*
 4. **Readiness-gating + reverse index** — consumers wait on `eval_ref`; dependents
    re-enqueue on upstream status change; `status.message` carries blocked reasons.
 5. **Artifact kind** — proto + converter/setter + reconcile running `nix copy`.

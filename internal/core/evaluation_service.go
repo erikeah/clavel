@@ -73,6 +73,11 @@ func (s *EvaluationService) Update(ctx context.Context, name string, data *Evalu
 		return err
 	}
 	if hasChanged, err := s.merge(target, data); err != nil {
+		// A conflict is a normal, retryable outcome: it is not an internal
+		// failure and must not be reported as one.
+		if errors.Is(err, exceptions.Conflict) {
+			return err
+		}
 		return errors.Join(exceptions.InternalFailure, err)
 	} else if !hasChanged {
 		return nil

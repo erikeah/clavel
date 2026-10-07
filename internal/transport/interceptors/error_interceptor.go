@@ -22,6 +22,9 @@ func ErrorInterceptor() connect.UnaryInterceptorFunc {
 				if errors.Is(err, exceptions.AlreadyExist) {
 					return nil, connect.NewError(connect.CodeAlreadyExists, err)
 				}
+				if errors.Is(err, exceptions.Conflict) {
+					return nil, connect.NewError(connect.CodeFailedPrecondition, err)
+				}
 				if errors.Is(err, exceptions.ExternalFailure) {
 					return nil, connect.NewError(connect.CodeAborted, err)
 				}
