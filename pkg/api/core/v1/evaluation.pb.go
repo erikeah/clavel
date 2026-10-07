@@ -733,8 +733,10 @@ func (*EvaluationServiceUpdateResponse) Descriptor() ([]byte, []int) {
 }
 
 type EvaluationServiceWatchRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	List          bool                   `protobuf:"varint,1,opt,name=list,proto3" json:"list,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Ask the server to stream the current state first, terminated by an
+	// EVENT_TYPE_SYNC marker, before forwarding changes.
+	List          bool `protobuf:"varint,1,opt,name=list,proto3" json:"list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -777,9 +779,14 @@ func (x *EvaluationServiceWatchRequest) GetList() bool {
 }
 
 type EvaluationServiceWatchResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          *Evaluation            `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
-	Error         *Error                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Data  *Evaluation            `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Error *Error                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	// What happened. EVENT_TYPE_PUT carries data; EVENT_TYPE_DELETE carries only
+	// name; EVENT_TYPE_SYNC carries neither.
+	Type EventType `protobuf:"varint,3,opt,name=type,proto3,enum=clavel.core.v1.EventType" json:"type,omitempty"`
+	// Identity of the resource the event refers to, set on every event.
+	Name          string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -828,11 +835,25 @@ func (x *EvaluationServiceWatchResponse) GetError() *Error {
 	return nil
 }
 
+func (x *EvaluationServiceWatchResponse) GetType() EventType {
+	if x != nil {
+		return x.Type
+	}
+	return EventType_EVENT_TYPE_UNSPECIFIED
+}
+
+func (x *EvaluationServiceWatchResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 var File_clavel_core_v1_evaluation_proto protoreflect.FileDescriptor
 
 const file_clavel_core_v1_evaluation_proto_rawDesc = "" +
 	"\n" +
-	"\x1fclavel/core/v1/evaluation.proto\x12\x0eclavel.core.v1\x1a\x1dclavel/core/v1/metadata.proto\x1a google/protobuf/field_mask.proto\"!\n" +
+	"\x1fclavel/core/v1/evaluation.proto\x12\x0eclavel.core.v1\x1a\x1aclavel/core/v1/event.proto\x1a\x1dclavel/core/v1/metadata.proto\x1a google/protobuf/field_mask.proto\"!\n" +
 	"\x05Error\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\"7\n" +
 	"\x17EvaluationSpecification\x12\x1c\n" +
@@ -871,10 +892,12 @@ const file_clavel_core_v1_evaluation_proto_rawDesc = "" +
 	"updateMask\"!\n" +
 	"\x1fEvaluationServiceUpdateResponse\"3\n" +
 	"\x1dEvaluationServiceWatchRequest\x12\x12\n" +
-	"\x04list\x18\x01 \x01(\bR\x04list\"}\n" +
+	"\x04list\x18\x01 \x01(\bR\x04list\"\xc0\x01\n" +
 	"\x1eEvaluationServiceWatchResponse\x12.\n" +
 	"\x04data\x18\x01 \x01(\v2\x1a.clavel.core.v1.EvaluationR\x04data\x12+\n" +
-	"\x05error\x18\x02 \x01(\v2\x15.clavel.core.v1.ErrorR\x05error*\xb0\x01\n" +
+	"\x05error\x18\x02 \x01(\v2\x15.clavel.core.v1.ErrorR\x05error\x12-\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x19.clavel.core.v1.EventTypeR\x04type\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name*\xb0\x01\n" +
 	"\x15EvaluationStatusPhase\x12'\n" +
 	"#EVALUATION_STATUS_PHASE_UNSPECIFIED\x10\x00\x12%\n" +
 	"!EVALUATION_STATUS_PHASE_SUCCEEDED\x10\x01\x12\"\n" +
@@ -922,6 +945,7 @@ var file_clavel_core_v1_evaluation_proto_goTypes = []any{
 	(*EvaluationServiceWatchResponse)(nil),  // 16: clavel.core.v1.EvaluationServiceWatchResponse
 	(*Metadata)(nil),                        // 17: clavel.core.v1.Metadata
 	(*fieldmaskpb.FieldMask)(nil),           // 18: google.protobuf.FieldMask
+	(EventType)(0),                          // 19: clavel.core.v1.EventType
 }
 var file_clavel_core_v1_evaluation_proto_depIdxs = []int32{
 	0,  // 0: clavel.core.v1.EvaluationStatus.phase:type_name -> clavel.core.v1.EvaluationStatusPhase
@@ -935,23 +959,24 @@ var file_clavel_core_v1_evaluation_proto_depIdxs = []int32{
 	18, // 8: clavel.core.v1.EvaluationServiceUpdateRequest.update_mask:type_name -> google.protobuf.FieldMask
 	4,  // 9: clavel.core.v1.EvaluationServiceWatchResponse.data:type_name -> clavel.core.v1.Evaluation
 	1,  // 10: clavel.core.v1.EvaluationServiceWatchResponse.error:type_name -> clavel.core.v1.Error
-	5,  // 11: clavel.core.v1.EvaluationService.Show:input_type -> clavel.core.v1.EvaluationServiceShowRequest
-	9,  // 12: clavel.core.v1.EvaluationService.List:input_type -> clavel.core.v1.EvaluationServiceListRequest
-	7,  // 13: clavel.core.v1.EvaluationService.Create:input_type -> clavel.core.v1.EvaluationServiceCreateRequest
-	13, // 14: clavel.core.v1.EvaluationService.Update:input_type -> clavel.core.v1.EvaluationServiceUpdateRequest
-	11, // 15: clavel.core.v1.EvaluationService.Delete:input_type -> clavel.core.v1.EvaluationServiceDeleteRequest
-	15, // 16: clavel.core.v1.EvaluationService.Watch:input_type -> clavel.core.v1.EvaluationServiceWatchRequest
-	6,  // 17: clavel.core.v1.EvaluationService.Show:output_type -> clavel.core.v1.EvaluationServiceShowResponse
-	10, // 18: clavel.core.v1.EvaluationService.List:output_type -> clavel.core.v1.EvaluationServiceListResponse
-	8,  // 19: clavel.core.v1.EvaluationService.Create:output_type -> clavel.core.v1.EvaluationServiceCreateResponse
-	14, // 20: clavel.core.v1.EvaluationService.Update:output_type -> clavel.core.v1.EvaluationServiceUpdateResponse
-	12, // 21: clavel.core.v1.EvaluationService.Delete:output_type -> clavel.core.v1.EvaluationServiceDeleteResponse
-	16, // 22: clavel.core.v1.EvaluationService.Watch:output_type -> clavel.core.v1.EvaluationServiceWatchResponse
-	17, // [17:23] is the sub-list for method output_type
-	11, // [11:17] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	19, // 11: clavel.core.v1.EvaluationServiceWatchResponse.type:type_name -> clavel.core.v1.EventType
+	5,  // 12: clavel.core.v1.EvaluationService.Show:input_type -> clavel.core.v1.EvaluationServiceShowRequest
+	9,  // 13: clavel.core.v1.EvaluationService.List:input_type -> clavel.core.v1.EvaluationServiceListRequest
+	7,  // 14: clavel.core.v1.EvaluationService.Create:input_type -> clavel.core.v1.EvaluationServiceCreateRequest
+	13, // 15: clavel.core.v1.EvaluationService.Update:input_type -> clavel.core.v1.EvaluationServiceUpdateRequest
+	11, // 16: clavel.core.v1.EvaluationService.Delete:input_type -> clavel.core.v1.EvaluationServiceDeleteRequest
+	15, // 17: clavel.core.v1.EvaluationService.Watch:input_type -> clavel.core.v1.EvaluationServiceWatchRequest
+	6,  // 18: clavel.core.v1.EvaluationService.Show:output_type -> clavel.core.v1.EvaluationServiceShowResponse
+	10, // 19: clavel.core.v1.EvaluationService.List:output_type -> clavel.core.v1.EvaluationServiceListResponse
+	8,  // 20: clavel.core.v1.EvaluationService.Create:output_type -> clavel.core.v1.EvaluationServiceCreateResponse
+	14, // 21: clavel.core.v1.EvaluationService.Update:output_type -> clavel.core.v1.EvaluationServiceUpdateResponse
+	12, // 22: clavel.core.v1.EvaluationService.Delete:output_type -> clavel.core.v1.EvaluationServiceDeleteResponse
+	16, // 23: clavel.core.v1.EvaluationService.Watch:output_type -> clavel.core.v1.EvaluationServiceWatchResponse
+	18, // [18:24] is the sub-list for method output_type
+	12, // [12:18] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_clavel_core_v1_evaluation_proto_init() }
@@ -959,6 +984,7 @@ func file_clavel_core_v1_evaluation_proto_init() {
 	if File_clavel_core_v1_evaluation_proto != nil {
 		return
 	}
+	file_clavel_core_v1_event_proto_init()
 	file_clavel_core_v1_metadata_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{

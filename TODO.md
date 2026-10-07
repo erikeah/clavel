@@ -11,18 +11,17 @@ value, and apply the mask consistently to `spec`, `metadata`, and `status`.
 
 ## Deletion / finalizers
 
-`internal/genericstore`'s Watch only forwards `EventTypePut`, so deletes never reach the
-controller: `EvaluationService.Delete` with finalizers sets a `deletionTimestamp`, but the
-reconcile loop only sees the resource disappear from a `List`-less stream.
+Deletion is wired end to end: `genericstore.Watch` emits put/delete/sync events from one
+gap-free etcd read, the informer evicts on delete and replaces its cache on the sync marker,
+and reconcile finalizes a terminating resource by dropping this controller's finalizer and
+deleting once no finalizer blocks it (`internal/controller/evaluation/controller.go`).
 
 Enhancement (deferred):
 
-- emit delete events from the store's Watch (requires a `deleted` marker on
-  `EvaluationServiceWatchResponse` in `api/clavel/core/v1/evaluation.proto` plus
-  `buf generate`),
-- let the informer evict on delete and enqueue the key,
-- let reconcile clear finalizers before the resource is removed (currently reconcile
-  returns nil for any missing key or `deletionTimestamp`).
+- the evaluation controller does not *register* `controllerFinalizer`, so no `Evaluation`
+  carries one and the clear step only runs when another actor registered it; register it as
+  soon as there is cleanup to perform on deletion (the `nix copy` cache removal of an
+  Artifact, the owned resources of a `ClavelConfiguration`).
 
 ## Evaluation attrs filter
 
@@ -65,23 +64,24 @@ result against stored resources, then issue Create/Update/Delete. Gaps:
   topological order on apply and reverse order on teardown
 - reconcile has no ordering (`internal/controller/evaluation/controller.go`): it short-circuits on
   `Succeeded && observedGeneration == generation` and never checks upstream readiness
-- no reverse-dependency index: `Informer.Add` enqueues only the changed key, and `Metadata` has no
-  labels or `ownerReferences` to find dependents when an upstream status changes
+- no reverse-dependency index: `Informer.Add` enqueues only the changed key, and nothing maps
+  an upstream status change to the resources that depend on it — `Metadata.ownerReferences`
+  (`api/clavel/core/v1/metadata.proto`) are stored but never read back
 - failure semantics undefined: a failed dependency should block its dependents instead of
   retrying them forever through the workqueue
 
 ## Nix as source of truth / pruning
 
 - Nix cannot signal deletion: the driver must diff desired vs. actual, which requires ownership
-  labels/annotations (`managed-by`, `owner`) that `Metadata`
-  (`api/clavel/core/v1/metadata.proto`) does not have
+  labels/annotations (`managed-by`, `owner`) — `Metadata`
+  (`api/clavel/core/v1/metadata.proto`) can carry them, but nothing writes them yet
 - pruning is destructive without a safety net (allowlist, plan/dry-run, `prevent_destroy`
   guard), otherwise a typo in the definition removes live resources
 - ownership-scoped listing is not expressible: `EvaluationServiceListRequest` has no selector
 - an API-side `Delete` is resurrected by the next apply while a Nix-side removal lingers until
   prune; one side must be declared authoritative (GitOps model) and drift decided
-- blocked on the `Deletion / finalizers` section above, which prevents any delete-driven
-  reconcile from completing
+- every pruned resource is deleted through reconcile once it terminates
+  (see `Deletion / finalizers`), so the remaining gap is ownership, not deletion
 
 ## Concurrent updates
 

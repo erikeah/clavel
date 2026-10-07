@@ -45,6 +45,30 @@ func (in *Informer[R]) Get(key string) (R, bool) {
 	return resource, ok
 }
 
+// Replace swaps the cache for a freshly read snapshot: everything the snapshot
+// does not contain is evicted, which a replay of puts alone can never do. Both
+// the snapshot keys and the previously cached keys are enqueued, so reconcile
+// resyncs on reconnect instead of trusting a cache built from a partial
+// history.
+func (in *Informer[R]) Replace(snapshot []R) {
+	in.mu.Lock()
+	previous := in.cache
+	in.cache = make(map[string]R, len(snapshot))
+	keys := make(map[string]struct{}, len(snapshot))
+	for _, resource := range snapshot {
+		key := in.keyFunc(resource)
+		in.cache[key] = resource
+		keys[key] = struct{}{}
+	}
+	for key := range previous {
+		keys[key] = struct{}{}
+	}
+	in.mu.Unlock()
+	for key := range keys {
+		in.queue.Add(key)
+	}
+}
+
 // List returns a snapshot of all cached resources.
 func (in *Informer[R]) List() []R {
 	in.mu.RLock()

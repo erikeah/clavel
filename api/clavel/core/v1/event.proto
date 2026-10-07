@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package clavel.core.v1;
+
+option go_package = "github.com/erikeah/clavel/pkg/api/core/v1;corev1";
+
+// EventType describes how a watched resource changed. Shared by every Watch
+// RPC so resource kinds agree on the vocabulary.
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  // A resource exists (initial snapshot item or a create/update).
+  EVENT_TYPE_PUT = 1;
+  // A resource was removed; only the identity is carried, never the object.
+  EVENT_TYPE_DELETE = 2;
+  // The initial snapshot ended; everything sent before this marker was the
+  // state at connect time, everything after it is a change.
+  EVENT_TYPE_SYNC = 3;
+}

@@ -33,18 +33,27 @@ func (s *EvaluationService) Create(ctx context.Context, data *Evaluation) error 
 	return nil
 }
 
+// Delete removes a resource. Without finalizers it is gone immediately and
+// repeated calls are a no-op; with finalizers the resource only gets a
+// deletionTimestamp and stays terminating until the last finalizer is dropped,
+// at which point a further Delete (typically from reconcile) completes it.
 func (s *EvaluationService) Delete(ctx context.Context, name string) error {
 	target, err := s.Show(ctx, name)
 	if err != nil {
+		if errors.Is(err, exceptions.DoesNotExist) {
+			return nil
+		}
 		return err
 	}
-	if len(target.Metadata.Finalizers) > 0 {
-		nowUTC := time.Now().UTC()
-		target.Metadata.DeletionTimestamp = &nowUTC
-		return s.Update(ctx, name, target)
-	} else {
+	if len(target.Metadata.Finalizers) == 0 {
 		return s.store.Delete(ctx, name)
 	}
+	if target.Metadata.DeletionTimestamp != nil {
+		return nil
+	}
+	nowUTC := time.Now().UTC()
+	target.Metadata.DeletionTimestamp = &nowUTC
+	return s.Update(ctx, name, target)
 }
 
 func (s *EvaluationService) List(ctx context.Context) ([]*Evaluation, error) {
@@ -74,8 +83,9 @@ func (s *EvaluationService) Update(ctx context.Context, name string, data *Evalu
 	return s.store.Update(ctx, name, target)
 }
 
-func (s *EvaluationService) Watch(ctx context.Context) (<-chan *Evaluation, <-chan error) {
-	return s.store.Watch(ctx)
+// Watch forwards the store's event stream; see EvaluationStore.Watch.
+func (s *EvaluationService) Watch(ctx context.Context, snapshot bool) (<-chan EvaluationWatchEvent, <-chan error) {
+	return s.store.Watch(ctx, snapshot)
 }
 
 func NewEvaluationService(store EvaluationStore) *EvaluationService {

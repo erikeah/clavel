@@ -137,6 +137,12 @@ ownerReferences + finalizers → prune, teardown order, cache cleanup
   kubectl diff); it is a pure function of the two documents.
 - Apply is idempotent and retried rather than transactional: a failure mid-apply
   leaves a partial set that the next reconcile converges.
+- The watch stream is the controller's only view of etcd. A connection replays the
+  current state and terminates it with a sync marker, then streams put/delete events
+  for changes; it resumes at the revision the snapshot was read from, so nothing is
+  read twice and nothing slips between the two. The informer replaces its cache on
+  the sync marker, which is how a reconnect forgets what was deleted while it was
+  down.
 
 ## Dependency resolution
 
@@ -172,9 +178,11 @@ prune = { r : r is owned by <root>, r.name ∉ manifest }
 - An API-side `Delete` of an owned resource is re-created by the next apply; the Nix
   definition is authoritative for owned resources (GitOps), while integrations keep
   API access for unowned resources and for `status` writes.
-- Deletion requires the `Deletion / finalizers` work in `TODO.md`: watch must emit
-  delete events, the informer must evict, and reconcile must clear finalizers before
-  the object disappears. Until then no delete-driven reconcile completes.
+- Deletion is plumbed through the watch stream (`EventType`: put, delete, sync): the
+  store reads a snapshot and resumes at that revision, the informer replaces its cache
+  on sync and evicts on delete, and reconcile finalizes a terminating resource by
+  dropping its finalizer and deleting once none blocks it. What is still missing is a
+  finalizer that is actually registered (`TODO.md`).
 
 ## Concurrency
 
@@ -220,10 +228,11 @@ The "no build at deploy time" rule doubles as the security boundary:
 
 1. **ObjectMeta + TypeMeta** — extend `metadata.proto` (`uid`, `labels`,
    `annotations`, `owner_references`), add `apiVersion`/`kind`; `buf generate`.
-   Foundational for everything below.
+   Foundational for everything below. *(done)*
 2. **Delete / finalizer plumbing** — the `Deletion / finalizers` item in `TODO.md`:
-   delete marker on `EvaluationServiceWatchResponse`, informer eviction, finalizer
-   clearing in reconcile.
+   typed watch events (put/delete/sync) on `EvaluationServiceWatchResponse`, informer
+   eviction and snapshot replace, finalizer clearing plus delete in reconcile.
+   *(done, registering the finalizer still pending)*
 3. **CAS update** — `genericstore.Update` as a `ModRevision` transaction.
 4. **Readiness-gating + reverse index** — consumers wait on `eval_ref`; dependents
    re-enqueue on upstream status change; `status.message` carries blocked reasons.

@@ -3,6 +3,7 @@ package evaluation
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +20,8 @@ type fakeClient struct {
 	objects map[string]*corev1.Evaluation
 	shows   int
 	updates int
+	deletes int
+	masks   [][]string
 }
 
 func newFakeClient(evaluations ...*core.Evaluation) *fakeClient {
@@ -48,8 +51,18 @@ func (f *fakeClient) Update(
 	request *connect.Request[corev1.EvaluationServiceUpdateRequest],
 ) (*connect.Response[corev1.EvaluationServiceUpdateResponse], error) {
 	f.updates++
+	f.masks = append(f.masks, request.Msg.GetUpdateMask().GetPaths())
 	f.objects[request.Msg.GetName()] = request.Msg.GetData()
 	return connect.NewResponse(&corev1.EvaluationServiceUpdateResponse{}), nil
+}
+
+func (f *fakeClient) Delete(
+	ctx context.Context,
+	request *connect.Request[corev1.EvaluationServiceDeleteRequest],
+) (*connect.Response[corev1.EvaluationServiceDeleteResponse], error) {
+	f.deletes++
+	delete(f.objects, request.Msg.GetName())
+	return connect.NewResponse(&corev1.EvaluationServiceDeleteResponse{}), nil
 }
 
 func newTestInformer(evaluations ...*core.Evaluation) *controller.Informer[*core.Evaluation] {
@@ -229,22 +242,120 @@ func TestReconcileMissingKeyReturnsNil(t *testing.T) {
 	}
 }
 
-func TestReconcileDeletionTimestampSkips(t *testing.T) {
+// terminating builds an evaluation that is on its way out.
+func terminating(finalizers []string) *core.Evaluation {
 	now := time.Now()
-	evaluation := &core.Evaluation{
+	return &core.Evaluation{
+		Spec: core.EvaluationSpecification{Reference: "ref#server"},
 		Metadata: core.Metadata{
 			Name:              "server",
 			Generation:        1,
+			Finalizers:        finalizers,
 			DeletionTimestamp: &now,
 		},
 	}
-	client := newFakeClient(evaluation)
-	informer := newTestInformer(evaluation)
+}
+
+func reconcileDeletesInsteadOfEvaluating(t *testing.T, client *fakeClient, informer *controller.Informer[*core.Evaluation]) {
+	t.Helper()
 	reconcile := newReconcile(client, informer, func(ctx context.Context, reference string) (string, error) {
 		t.Fatal("evaluation ran for a resource being deleted")
 		return "", nil
 	})
-	if err := reconcile(context.Background(), evaluation.Metadata.Name); err != nil {
-		t.Fatalf("reconcile() error = %v, want nil", err)
+	if err := reconcile(context.Background(), "server"); err != nil {
+		t.Fatalf("reconcile() error = %v", err)
+	}
+}
+
+func TestReconcileClearsOwnFinalizerInsteadOfDeleting(t *testing.T) {
+	evaluation := terminating([]string{controllerFinalizer})
+	client := newFakeClient(evaluation)
+	informer := newTestInformer(evaluation)
+
+	reconcileDeletesInsteadOfEvaluating(t, client, informer)
+
+	if client.deletes != 0 {
+		t.Fatalf("deletes = %d, want 0 while a finalizer still blocks", client.deletes)
+	}
+	if client.updates != 1 {
+		t.Fatalf("updates = %d, want 1 to drop the finalizer", client.updates)
+	}
+	wantMask := []string{"data.metadata.finalizers"}
+	if !slices.Equal(client.masks[0], wantMask) {
+		t.Fatalf("update mask = %v, want %v", client.masks[0], wantMask)
+	}
+	if finalizers := client.objects["server"].GetMetadata().GetFinalizers(); len(finalizers) != 0 {
+		t.Fatalf("finalizers = %v, want empty", finalizers)
+	}
+}
+
+func TestReconcileKeepsForeignFinalizer(t *testing.T) {
+	evaluation := terminating([]string{"example.com/cleanup"})
+	client := newFakeClient(evaluation)
+	informer := newTestInformer(evaluation)
+
+	reconcileDeletesInsteadOfEvaluating(t, client, informer)
+
+	if client.updates != 0 || client.deletes != 0 {
+		t.Fatalf("updates = %d deletes = %d, want neither", client.updates, client.deletes)
+	}
+}
+
+func TestReconcileDeletesOnceFinalizersAreDrained(t *testing.T) {
+	evaluation := terminating(nil)
+	client := newFakeClient(evaluation)
+	informer := newTestInformer(evaluation)
+
+	reconcileDeletesInsteadOfEvaluating(t, client, informer)
+
+	if client.deletes != 1 {
+		t.Fatalf("deletes = %d, want 1", client.deletes)
+	}
+	if client.shows != 0 || client.updates != 0 {
+		t.Fatalf("shows = %d updates = %d, want no API traffic before the delete", client.shows, client.updates)
+	}
+}
+
+func TestWatchApplierReplacesCacheAtSync(t *testing.T) {
+	informer := newTestInformer(&core.Evaluation{Metadata: core.Metadata{Name: "stale"}})
+	applier := newWatchApplier(informer)
+
+	applier.apply(&corev1.EvaluationServiceWatchResponse{
+		Type: corev1.EventType_EVENT_TYPE_PUT,
+		Name: "kept",
+		Data: &corev1.Evaluation{Metadata: &corev1.Metadata{Name: "kept"}},
+	})
+	if _, ok := informer.Get("kept"); ok {
+		t.Fatal("snapshot item was applied before the sync marker")
+	}
+	applier.apply(&corev1.EvaluationServiceWatchResponse{Type: corev1.EventType_EVENT_TYPE_SYNC})
+
+	if _, ok := informer.Get("stale"); ok {
+		t.Fatal("resource missing from the snapshot survived the sync")
+	}
+	if _, ok := informer.Get("kept"); !ok {
+		t.Fatal("snapshot item was not cached at the sync marker")
+	}
+}
+
+func TestWatchApplierAppliesChangesAfterSync(t *testing.T) {
+	informer := newTestInformer()
+	applier := newWatchApplier(informer)
+	applier.apply(&corev1.EvaluationServiceWatchResponse{Type: corev1.EventType_EVENT_TYPE_SYNC})
+
+	applier.apply(&corev1.EvaluationServiceWatchResponse{
+		Type: corev1.EventType_EVENT_TYPE_PUT,
+		Name: "server",
+		Data: &corev1.Evaluation{Metadata: &corev1.Metadata{Name: "server"}},
+	})
+	if _, ok := informer.Get("server"); !ok {
+		t.Fatal("put after the sync marker was not cached")
+	}
+	applier.apply(&corev1.EvaluationServiceWatchResponse{
+		Type: corev1.EventType_EVENT_TYPE_DELETE,
+		Name: "server",
+	})
+	if _, ok := informer.Get("server"); ok {
+		t.Fatal("delete event did not evict the resource")
 	}
 }

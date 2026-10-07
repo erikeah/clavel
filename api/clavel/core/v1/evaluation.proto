@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package clavel.core.v1;
 
+import "clavel/core/v1/event.proto";
 import "clavel/core/v1/metadata.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -76,12 +77,19 @@ message EvaluationServiceUpdateRequest {
 message EvaluationServiceUpdateResponse {}
 
 message EvaluationServiceWatchRequest {
+  // Ask the server to stream the current state first, terminated by an
+  // EVENT_TYPE_SYNC marker, before forwarding changes.
   bool list = 1;
 }
 
 message EvaluationServiceWatchResponse {
   Evaluation data = 1;
   Error error = 2;
+  // What happened. EVENT_TYPE_PUT carries data; EVENT_TYPE_DELETE carries only
+  // name; EVENT_TYPE_SYNC carries neither.
+  EventType type = 3;
+  // Identity of the resource the event refers to, set on every event.
+  string name = 4;
 }
 
 service EvaluationService {

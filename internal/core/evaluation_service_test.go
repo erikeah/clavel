@@ -12,6 +12,7 @@ import (
 type fakeStore struct {
 	created map[string]*Evaluation
 	updated map[string]*Evaluation
+	deleted []string
 	stored  *Evaluation
 }
 
@@ -27,13 +28,19 @@ func (s *fakeStore) Create(_ context.Context, key string, data *Evaluation) erro
 	return nil
 }
 
-func (s *fakeStore) Delete(context.Context, string) error { return nil }
+func (s *fakeStore) Delete(_ context.Context, key string) error {
+	s.deleted = append(s.deleted, key)
+	return nil
+}
 
 func (s *fakeStore) FindOne(context.Context, string) (*Evaluation, error) {
 	if s.stored == nil {
 		return nil, exceptions.DoesNotExist
 	}
-	return s.stored, nil
+	// A read has to hand out its own copy: read-modify-write updates compare
+	// and rewrite the object they were given.
+	snapshot := *s.stored
+	return &snapshot, nil
 }
 
 func (s *fakeStore) List(context.Context) ([]*Evaluation, error) { return nil, nil }
@@ -43,7 +50,7 @@ func (s *fakeStore) Update(_ context.Context, key string, data *Evaluation) erro
 	return nil
 }
 
-func (s *fakeStore) Watch(context.Context) (<-chan *Evaluation, <-chan error) {
+func (s *fakeStore) Watch(context.Context, bool) (<-chan EvaluationWatchEvent, <-chan error) {
 	return nil, nil
 }
 
@@ -146,5 +153,121 @@ func TestUpdateRejectsRename(t *testing.T) {
 	}
 	if !errors.Is(err, exceptions.InvalidArguments) {
 		t.Fatalf("Update() error = %v, want InvalidArguments", err)
+	}
+}
+
+func newStoredEvaluation(finalizers []string, terminating bool) *Evaluation {
+	now := time.Now().UTC()
+	var deletion *time.Time
+	if terminating {
+		deletion = &now
+	}
+	return &Evaluation{
+		APIVersion: EvaluationAPIVersion,
+		Kind:       EvaluationKind,
+		Spec:       EvaluationSpecification{Reference: "ref#server"},
+		Metadata: Metadata{
+			Name:              "server",
+			UID:               "uid-1",
+			ResourceVersion:   "17",
+			Finalizers:        finalizers,
+			CreationTimestamp: &now,
+			DeletionTimestamp: deletion,
+		},
+	}
+}
+
+func TestDeleteRemovesResourceWithoutFinalizers(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation(nil, false)
+	service := newService(store)
+
+	if err := service.Delete(context.Background(), "server"); err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if len(store.deleted) != 1 {
+		t.Fatalf("store deletes = %v, want [server]", store.deleted)
+	}
+	if len(store.updated) != 0 {
+		t.Fatalf("store updates = %d, want 0", len(store.updated))
+	}
+}
+
+func TestDeleteCompletesDrainedResource(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation(nil, true)
+	service := newService(store)
+
+	if err := service.Delete(context.Background(), "server"); err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if len(store.deleted) != 1 {
+		t.Fatalf("store deletes = %v, want [server]", store.deleted)
+	}
+}
+
+func TestDeleteWaitsOnFinalizers(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation([]string{"clavel.core/evaluation"}, false)
+	service := newService(store)
+
+	if err := service.Delete(context.Background(), "server"); err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if len(store.deleted) != 0 {
+		t.Fatalf("store deletes = %v, want none while a finalizer blocks", store.deleted)
+	}
+	terminating := store.updated["server"]
+	if terminating == nil {
+		t.Fatal("Update() was not called to mark the resource terminating")
+	}
+	if terminating.Metadata.DeletionTimestamp == nil {
+		t.Fatal("deletionTimestamp was not set")
+	}
+	if len(terminating.Metadata.Finalizers) != 1 {
+		t.Fatalf("finalizers = %v, want them preserved", terminating.Metadata.Finalizers)
+	}
+}
+
+func TestDeleteIsNoOpWhileTerminating(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation([]string{"clavel.core/evaluation"}, true)
+	service := newService(store)
+
+	if err := service.Delete(context.Background(), "server"); err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if len(store.deleted) != 0 || len(store.updated) != 0 {
+		t.Fatalf("deletes = %v updates = %d, want neither", store.deleted, len(store.updated))
+	}
+}
+
+func TestDeleteIsIdempotent(t *testing.T) {
+	store := newFakeStore()
+	service := newService(store)
+
+	if err := service.Delete(context.Background(), "server"); err != nil {
+		t.Fatalf("Delete() error = %v, want nil for a resource that is gone", err)
+	}
+	if len(store.deleted) != 0 {
+		t.Fatalf("store deletes = %v, want none", store.deleted)
+	}
+}
+
+func TestUpdateKeepsDeletingToReconcile(t *testing.T) {
+	store := newFakeStore()
+	store.stored = newStoredEvaluation(nil, true)
+	service := newService(store)
+
+	update := newStoredEvaluation(nil, true)
+	update.Status = EvaluationStatus{Phase: EvaluationPhasePending, ObservedGeneration: 1}
+	if err := service.Update(context.Background(), "server", update); err != nil {
+		t.Fatalf("Update() error = %v", err)
+	}
+	if len(store.deleted) != 0 {
+		t.Fatalf("store deletes = %v, want none: Update must stay a pure write", store.deleted)
+	}
+	if len(store.updated) != 1 {
+		t.Fatalf("store updates = %d, want 1", len(store.updated))
 	}
 }

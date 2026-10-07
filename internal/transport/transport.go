@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/erikeah/clavel/internal/core"
 	"github.com/erikeah/clavel/internal/fieldmaskcommander"
+	"github.com/erikeah/clavel/internal/genericstore"
 	"github.com/erikeah/clavel/internal/transport/interceptors"
 	corev1 "github.com/erikeah/clavel/pkg/api/core/v1"
 	"github.com/erikeah/clavel/pkg/api/core/v1/corev1connect"
@@ -81,50 +82,55 @@ func (handler *evaluationServiceHandler) Update(ctx context.Context, request *co
 	return connect.NewResponse(&corev1.EvaluationServiceUpdateResponse{}), nil
 }
 
-// TODO: Set a query option to list resources first
+// Watch streams the resource stream to the client. With List the server first
+// replays the current state terminated by a sync marker, then forwards changes
+// until ctx is cancelled. A closed store channel is disabled rather than
+// drained so the remaining one can still be read.
 func (handler *evaluationServiceHandler) Watch(ctx context.Context, request *connect.Request[corev1.EvaluationServiceWatchRequest], stream *connect.ServerStream[corev1.EvaluationServiceWatchResponse]) error {
-	if request.Msg.List {
-		list, err := handler.service.List(ctx)
-		if err != nil {
-			return err
-		}
-		for _, evaluation := range list {
-			response := &corev1.EvaluationServiceWatchResponse{
-				Data: &corev1.Evaluation{},
+	eventChan, errChan := handler.service.Watch(ctx, request.Msg.GetList())
+	for eventChan != nil || errChan != nil {
+		select {
+		case event, ok := <-eventChan:
+			if !ok {
+				eventChan = nil
+				continue
 			}
-			response.Data.Set(evaluation)
-			if err := stream.Send(response); err != nil {
+			if err := stream.Send(watchResponse(event)); err != nil {
 				return err
 			}
-		}
-	}
-	evaluationChan, errChan := handler.service.Watch(ctx)
-	for {
-		select {
-		case evaluation, ok := <-evaluationChan:
-			if ok {
-				response := &corev1.EvaluationServiceWatchResponse{
-					Data: &corev1.Evaluation{},
-				}
-				response.Data.Set(evaluation)
-				if err := stream.Send(response); err != nil {
-					return err
-				}
+		case err, ok := <-errChan:
+			if !ok {
+				errChan = nil
+				continue
 			}
-		case err := <-errChan:
 			slog.Error(err.Error())
-			response := &corev1.EvaluationServiceWatchResponse{
-				Error: &corev1.Error{
-					Message: err.Error(),
-				},
-			}
-			if err := stream.Send(response); err != nil {
+			if err := stream.Send(&corev1.EvaluationServiceWatchResponse{
+				Error: &corev1.Error{Message: err.Error()},
+			}); err != nil {
 				return err
 			}
 		case <-ctx.Done():
 			return ctx.Err()
 		}
 	}
+	return nil
+}
+
+// watchResponse maps a store event onto the wire: puts carry the object,
+// deletes carry only the identity they refer to.
+func watchResponse(event core.EvaluationWatchEvent) *corev1.EvaluationServiceWatchResponse {
+	response := &corev1.EvaluationServiceWatchResponse{Name: event.Name}
+	switch event.Type {
+	case genericstore.EventTypePut:
+		response.Type = corev1.EventType_EVENT_TYPE_PUT
+		response.Data = &corev1.Evaluation{}
+		response.Data.Set(event.Object)
+	case genericstore.EventTypeDelete:
+		response.Type = corev1.EventType_EVENT_TYPE_DELETE
+	case genericstore.EventTypeSync:
+		response.Type = corev1.EventType_EVENT_TYPE_SYNC
+	}
+	return response
 }
 
 func NewEvaluationServiceHandler(service *core.EvaluationService) (string, http.Handler) {
